@@ -1,5 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_proto_grpc//cpp:defs.bzl", "cpp_grpc_library")
+load("@io_bazel_rules_docker//cc:image.bzl", "cc_image")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -26,14 +27,14 @@ cc_library(
     deps = [":routeguide"],
 )
 
-cc_binary(
+cc_image(
     name = "client",
     srcs = ["client.cc"],
     data = ["//example/proto:routeguide_features"],
     deps = [":helper"],
 )
 
-cc_binary(
+cc_image(
     name = "server",
     srcs = ["server.cc"],
     data = ["//example/proto:routeguide_features"],

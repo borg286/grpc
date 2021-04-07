@@ -1,12 +1,14 @@
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_proto_grpc//java:defs.bzl", "java_grpc_library")
+load("@io_bazel_rules_docker//java:image.bzl", "java_image")
+
 
 java_grpc_library(
     name = "routeguide",
     protos = ["//example/proto:routeguide_proto"],
 )
 
-java_binary(
+java_image(
     name = "client",
     srcs = [
         "io/grpc/examples/routeguide/RouteGuideClient.java",
@@ -20,7 +22,7 @@ java_binary(
     ],
 )
 
-java_binary(
+java_image(
     name = "server",
     srcs = [
         "io/grpc/examples/routeguide/RouteGuideServer.java",
