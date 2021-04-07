@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	pb "google.golang.org/grpc/examples/route_guide/routeguide"
+	pb "google.golang.org/grpc/example/route_guide/routeguide"
 )
 
 // TestFeature is a bit contrived, but we're mostly interested that the proto

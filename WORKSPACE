@@ -255,6 +255,7 @@ jsonnet_repositories()
 http_archive(
     name = "kube_jsonnet",
     url = "https://github.com/bitnami-labs/kube-libsonnet/archive/96b30825c33b7286894c095be19b7b90687b1ede.tar.gz",
+    sha256 = "2a3a4f1686ba801b4697613a3132710eb7bbe40685b23df9677318835a3c7dac",
     strip_prefix = "kube-libsonnet-96b30825c33b7286894c095be19b7b90687b1ede",
     build_file_content = """
 package(default_visibility = ["//visibility:public"])
