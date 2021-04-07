@@ -262,13 +262,13 @@ public class RouteGuideClient {
       return;
     }
 
-    int port = 50051;
-    String serverPort = System.getenv("SERVER_PORT");
-    if (serverPort != null && !serverPort.isEmpty()) {
-      port = Integer.parseInt(serverPort);
+    String hostname = "localhost";
+    int port = 50052;
+    if (args.length >= 2) {
+      hostname = args[0];
+      port = Integer.parseInt(args[1]);
     }
-
-    RouteGuideClient client = new RouteGuideClient("localhost", port);
+    RouteGuideClient client = new RouteGuideClient(hostname, port);
     try {
       // Looking for a valid feature
       client.getFeature(409146138, -746188906);

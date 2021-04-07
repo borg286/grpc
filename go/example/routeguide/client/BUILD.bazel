@@ -1,5 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_proto_grpc//go:defs.bzl", "go_grpc_library")
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 
 go_grpc_library(
     name = "routeguide",
@@ -23,7 +24,7 @@ go_library(
     ],
 )
 
-go_binary(
+go_image(
     name = "client",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],

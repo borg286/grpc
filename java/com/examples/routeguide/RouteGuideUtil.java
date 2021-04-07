@@ -49,8 +49,8 @@ public class RouteGuideUtil {
    * Gets the default features file from classpath.
    */
   public static URL getDefaultFeaturesFile() {
-    String filename = "/example/routeguide/route_guide_db.json";
-    URL r = RouteGuideServer.class.getResource(filename);
+    String filename = "/com/examples/routeguide/route_guide_db.json";
+    URL r = RouteGuideUtil.class.getResource(filename);
     if (r == null) {
       throw new NullPointerException("No resource found at " + filename);
     }

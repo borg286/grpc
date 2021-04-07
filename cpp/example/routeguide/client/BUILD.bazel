@@ -1,0 +1,12 @@
+load("@io_bazel_rules_docker//cc:image.bzl", "cc_image")
+
+package(default_visibility = ["//visibility:public"])
+
+
+cc_image(
+    name = "client",
+    srcs = ["client.cc"],
+    data = ["//example/proto:routeguide_features"],
+    deps = ["//cpp/example/routeguide/server:helper"],
+)
+
