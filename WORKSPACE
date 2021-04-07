@@ -34,7 +34,7 @@ go_register_toolchains(
 
 bazel_gazelle()
 
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 gazelle_dependencies()
 
@@ -80,11 +80,31 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@io_grpc_grpc_java//:repositories.bzl", "IO_GRPC_GRPC_JAVA_ARTIFACTS", "IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS", "grpc_java_repositories")
 
 maven_install(
-    artifacts = IO_GRPC_GRPC_JAVA_ARTIFACTS,
+    artifacts = IO_GRPC_GRPC_JAVA_ARTIFACTS + [
+        # Imported from Redisson dependencies
+        "org.redisson:redisson-all:3.13.3",
+        "redis.clients:jedis:3.0.0",
+        "org.slf4j:slf4j-api:1.7.25",
+        "org.slf4j:slf4j-simple:1.7.25",
+        "org.apache.commons:commons-pool2:2.4.3",
+        "org.apache.commons:commons-lang3:3.11",
+        #"io.netty:netty-tcnative-boringssl-static:2.0.31.Final",
+        #"io.netty:netty-all:4.1.41.Final",
+
+        # Flag library
+        "com.github.pcj:google-options:jar:1.0.0",
+        "com.google.code.gson:gson:2.8.5",
+        "com.google.protobuf:protobuf-java-util:3.6.1",
+
+        # Joda time
+        "joda-time:joda-time:2.10",
+    ],
     generate_compat_repositories = True,
     override_targets = IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS,
     repositories = [
         "https://repo.maven.apache.org/maven2/",
+        "https://repo1.maven.org/maven2",
+        "https://mvnrepository.com",
     ],
 )
 
@@ -176,3 +196,93 @@ container_pull(
 #====== END Docker images==========
 
 
+#=======   K8S =======
+
+# This requires rules_docker to be fully instantiated before
+# it is pulled in.
+# Download the rules_k8s repository at release v0.6
+http_archive(
+    name = "io_bazel_rules_k8s",
+    strip_prefix = "rules_k8s-0.6",
+    urls = ["https://github.com/bazelbuild/rules_k8s/archive/v0.6.tar.gz"],
+    sha256 = "51f0977294699cd547e139ceff2396c32588575588678d2054da167691a227ef",
+)
+
+load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_repositories")
+
+k8s_repositories()
+
+load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
+
+k8s_go_deps()
+
+load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_defaults")
+#load("//prod:cluster_consts.bzl", "REGISTRY", "CLUSTER", "PROJECT")
+
+#k8s_defaults(
+#  name = "k8s_deploy",
+#  cluster = CLUSTER,
+#  kind = "deployment",
+#)
+#k8s_defaults(
+#  name = "k8s_job",
+#  cluster = CLUSTER,
+#  kind = "job",
+#)
+
+#k8s_defaults(
+#  name = "k8s_object",
+#  cluster = CLUSTER,
+#)
+
+
+#====== END K8S ======
+
+
+#====== JSONNET  =====
+# We use jsonnet to configure the kubernetes deployments, services...
+
+git_repository(
+    name = "io_bazel_rules_jsonnet",
+    commit = "12979862ab51358a8a5753f5a4aa0658fec9d4af",
+    remote = "https://github.com/bazelbuild/rules_jsonnet.git",
+)
+
+load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_repositories")
+
+jsonnet_repositories()
+
+http_archive(
+    name = "kube_jsonnet",
+    url = "https://github.com/bitnami-labs/kube-libsonnet/archive/96b30825c33b7286894c095be19b7b90687b1ede.tar.gz",
+    strip_prefix = "kube-libsonnet-96b30825c33b7286894c095be19b7b90687b1ede",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_library")
+
+jsonnet_library(
+    name = "kube_lib",
+    srcs = ["kube.libsonnet"],
+)
+""",
+)
+#======= END JSONNET  ======
+
+
+#======== Monitoring configs =====
+
+new_git_repository(
+    name = "monitoring",
+    remote = "https://github.com/coreos/kube-prometheus.git",
+    commit = "9493a1a5f7090dca406a0e80d1986484c70c1acf",
+    build_file = "//prod:BUILD.yaml-extraction",
+)
+
+
+go_repository(
+    name = "gojsontoyaml",
+    commit = "3697ded27e8cfea8e547eb082ebfbde36f1b5ee6",
+    importpath = "github.com/brancz/gojsontoyaml",
+)
+
+#======== End Monitoring configs ====
