@@ -217,23 +217,23 @@ load("@io_bazel_rules_k8s//k8s:k8s_go_deps.bzl", k8s_go_deps = "deps")
 k8s_go_deps()
 
 load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_defaults")
-#load("//prod:cluster_consts.bzl", "REGISTRY", "CLUSTER", "PROJECT")
+load("//prod:cluster_consts.bzl", "REGISTRY", "CLUSTER", "PROJECT")
 
-#k8s_defaults(
-#  name = "k8s_deploy",
-#  cluster = CLUSTER,
-#  kind = "deployment",
-#)
-#k8s_defaults(
-#  name = "k8s_job",
-#  cluster = CLUSTER,
-#  kind = "job",
-#)
+k8s_defaults(
+  name = "k8s_deploy",
+  cluster = CLUSTER,
+  kind = "deployment",
+)
+k8s_defaults(
+  name = "k8s_job",
+  cluster = CLUSTER,
+  kind = "job",
+)
 
-#k8s_defaults(
-#  name = "k8s_object",
-#  cluster = CLUSTER,
-#)
+k8s_defaults(
+  name = "k8s_object",
+  cluster = CLUSTER,
+)
 
 
 #====== END K8S ======
@@ -269,6 +269,11 @@ jsonnet_library(
 #======= END JSONNET  ======
 
 
+go_repository(
+    name = "gomodule_redigo",
+    commit = "2cd21d9966bf7ff9ae091419744f0b3fb0fecace",
+    importpath = "github.com/gomodule/redigo",
+)
 #======== Monitoring configs =====
 
 new_git_repository(
