@@ -1,0 +1,24 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@rules_proto_grpc//java:defs.bzl", "java_grpc_library")
+
+java_grpc_library(
+    name = "routeguide",
+    deps = ["//example/proto:routeguide_proto"],
+)
+filegroup(
+    name = "db",
+    srcs = ["route_guide_db.json"],
+)
+
+java_library(
+    name = "util",
+    srcs = [
+        "RouteGuideUtil.java",
+    ],
+    deps = [
+        ":routeguide",
+        "@com_google_protobuf//:protobuf_java_util",
+        "@maven//:org_redisson_redisson_all",
+    ],
+)
