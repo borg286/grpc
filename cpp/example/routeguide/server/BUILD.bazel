@@ -34,6 +34,10 @@ cc_image(
     srcs = ["server.cc"],
     data = ["//example/proto:routeguide_features"],
     deps = [":helper"],
+    linkstatic = True,
+    features = [
+        "fully_static_link",
+    ],
 )
 
 NAME = "cc-routeguide"

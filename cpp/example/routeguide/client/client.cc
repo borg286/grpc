@@ -21,6 +21,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <unistd.h>
 #include <thread>
 
 #include <grpc/grpc.h>
@@ -220,7 +221,7 @@ class RouteGuideClient {
 };
 
 int main(int argc, char** argv) {
-  std::string server_address = routeguide::GetServerAddress();
+  std::string server_address = routeguide::GetServerAddress(argc, argv);
 
   std::cout << "Server Address: " << server_address << std::endl;
 
@@ -236,15 +237,17 @@ int main(int argc, char** argv) {
 
   std::cout << "Server started." << std::endl;
 
-
-  std::cout << "-------------- GetFeature --------------" << std::endl;
-  guide.GetFeature();
-  std::cout << "-------------- ListFeatures --------------" << std::endl;
-  guide.ListFeatures();
-  std::cout << "-------------- RecordRoute --------------" << std::endl;
-  guide.RecordRoute();
-  std::cout << "-------------- RouteChat --------------" << std::endl;
-  guide.RouteChat();
+  while(true) {
+    std::cout << "-------------- GetFeature --------------" << std::endl;
+    guide.GetFeature();
+    std::cout << "-------------- ListFeatures --------------" << std::endl;
+    guide.ListFeatures();
+    std::cout << "-------------- RecordRoute --------------" << std::endl;
+    guide.RecordRoute();
+    std::cout << "-------------- RouteChat --------------" << std::endl;
+    guide.RouteChat();
+    sleep(10);
+  }
 
   return 0;
 }

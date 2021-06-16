@@ -1,4 +1,4 @@
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 
@@ -292,3 +292,11 @@ go_repository(
 )
 
 #======== End Monitoring configs ====
+
+
+http_file(
+    name = "k3s",
+    urls = ["https://github.com/k3s-io/k3s/releases/download/v1.19.10%2Bk3s1/k3s"],
+    sha256 = "740451d8914477d4917338f55a321ad34af75dc59782b387088b8c1a3d33d607",
+    executable = True,
+)

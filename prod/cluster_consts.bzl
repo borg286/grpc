@@ -1,5 +1,5 @@
 PROJECT = "fiery-orb-681"
-CLUSTER = "k3d-mycluster"
+CLUSTER = "k3d-k3s-default"
 REGISTRY = "gcr.io"
 
 PROD = "prod"

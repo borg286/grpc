@@ -15,18 +15,18 @@ local main_container = kube.Container("server") {
   ),
   resources: {},
   image: images[params.env],
-  args: [backend_service.metadata.name, std.toString(backend_service.spec.ports[0].port)],
+  args: ["-h", backend_service.metadata.name, "-p", std.toString(backend_service.spec.ports[0].port)],
 };
 
-local job = kube.Job(params.name) {
+
+local deployment = kube.Deployment(params.name) {
   metadata+: {namespace: envs.getName(params.env)},
   spec+: {
-    selector: null,
+    replicas: 1,
     template+: {
       spec+: {
         containers_+: {
           gb_fe: main_container,
 }}}}};
 
-
-job
+deployment

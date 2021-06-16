@@ -23,6 +23,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unistd.h>
+#include <getopt.h>
 #include "example/proto/routeguide.grpc.pb.h"
 
 namespace routeguide {
@@ -44,11 +46,31 @@ std::string GetDbFileContent(int argc, char** argv) {
   return db.str();
 }
 
-std::string GetServerAddress() {
+std::string GetServerAddress(int argc, char** argv) {
   std::string server_host("0.0.0.0");
   std::string server_port("50051");
   if (std::getenv("SERVER_PORT")) {
     server_port = std::getenv("SERVER_PORT");
+  }
+  int opt = 0;
+
+  std::cout << "parsing"<< std::endl;
+  while ((opt = getopt(argc, argv, "h:p:")) != -1) {
+    std::cout << "Opt: " << opt << std::endl;
+    std::cout << "Optarg: "<<optarg << std::endl;
+
+     switch (opt) {
+     case 'p':
+         server_port = optarg;
+         break;
+     case 'h':
+         server_host = optarg;
+         break;
+     default: /* '?' */
+         fprintf(stderr, "Usage: %s [-h server] [-p port]\n",
+                 argv[0]);
+         exit(EXIT_FAILURE);
+     }
   }
   std::string server_address = server_host + ":" + server_port;
   return server_address;
