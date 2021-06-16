@@ -228,6 +228,7 @@ func main() {
 	if os.Getenv("SERVER_PORT") != "" {
 		serverPort = os.Getenv("SERVER_PORT")
 	}
+	log.Printf("Listening to port %s", serverPort)
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%s", serverPort))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

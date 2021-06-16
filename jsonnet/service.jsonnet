@@ -14,7 +14,7 @@ kube.Service(params.name) {
       },
     ],
     type: "ClusterIP",
-    clusterIP: null,
+    //clusterIP: null,
   },
 }
 

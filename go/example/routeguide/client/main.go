@@ -169,6 +169,7 @@ func main() {
 	}
 
 	address := *serverAddr
+	log.Printf("Connecting to server %s", address)
 
 	if os.Getenv("SERVER_PORT") != "" {
 		address = fmt.Sprintf("localhost:%s", os.Getenv("SERVER_PORT"))
