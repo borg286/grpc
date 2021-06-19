@@ -1,5 +1,7 @@
 load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_to_json")
 
+# Segregate all the prometheus operator kubernetes definitions into groups so changes in one stack don't mean
+# the entire setup needs to be rebuilt.  The keys are the build rules that can push individual configuration to kubernetes.
 SETUP = {
     "00namespace-namespace_k8s": "00namespace-namespace.json",
     "0prometheus-operator-0alertmanagerConfigCustomResourceDefinition_k8s": "0prometheus-operator-0alertmanagerConfigCustomResourceDefinition.json",
@@ -70,6 +72,8 @@ PROMETHEUS = {
     "prometheus-serviceMonitor_k8s": "prometheus-serviceMonitor.json",
 }
 
+# Since bazel doesn't allow dynamic importing of arbitrary dependencies, we must declare them in the
+# workspace file, and import them here.
 common_deps = [
     "@kube-prometheus//:libsonnet",
     "@prometheus-operator//:libsonnet",
@@ -84,7 +88,9 @@ common_deps = [
 ]
 
 
-
+# The jsonnet files import from kube-prometheus's main.jsonnet and then pull out the various
+# stacks like the alert manager, node-exporter, grafana, custom resource definitions...
+# jsonnet_to_json executes these jsonnet files to produce a set of json files.
 jsonnet_to_json(
     name = "setup",
     src = "setup.jsonnet",
@@ -125,11 +131,22 @@ jsonnet_to_json(
     deps = common_deps,
 )
 
+# Add in any extra dashboards you want to have on grafana
+extra_dashboards = {
+    "grpc_redis": "//java/com/examples/grpc_redis/server/monitoring:dashboard.json"
+}
+# It seems that most of the time spent here is compiling base dashboards into json strings.
+# TODO: We should probably pull these out and make them bazel build targets, then inject them in here
+# like other dashboards. Pre-building them will result in the json files being computed only once rather
+# the jsonnet re-rendering the dashboards.
 jsonnet_to_json(
     name = "grafana",
     src = "grafana.jsonnet",
     multiple_outputs = 1,
     outs = GRAFANA.values(),
+    ext_code = {"dashboard_keys": "%s" % extra_dashboards.keys()},
+    ext_code_file_vars = extra_dashboards.keys(),
+    ext_code_files = extra_dashboards.values(),
     deps = common_deps,
 )
 
@@ -137,7 +154,7 @@ jsonnet_to_json(
 
 load("@k8s_object//:defaults.bzl", "k8s_object")
 
-
+# Bundle up the json files into bash scripts that would push the configuration to kubernetes.
 
 [[k8s_object(
     name = name,
@@ -146,6 +163,9 @@ load("@k8s_object//:defaults.bzl", "k8s_object")
 for group in [SETUP, ALERT_MANAGER, GRAFANA, KUBE_STATE_METRICS, NODE_EXPORTER, PROMETHEUS]]
 
 
+
+# Bundle everything up into a monitoring-setup, monitoring, and dashboard k8s groups.
+
 load("@io_bazel_rules_k8s//k8s:objects.bzl", "k8s_objects")
 
 k8s_objects(
@@ -153,9 +173,15 @@ k8s_objects(
     objects = [name for name in SETUP.keys()]
 )
 
-monitoring_k3s_targets = ALERT_MANAGER.keys() + GRAFANA.keys() + KUBE_STATE_METRICS.keys() + NODE_EXPORTER.keys() + PROMETHEUS.keys()
+
+monitoring_k3s_targets = ALERT_MANAGER.keys() + KUBE_STATE_METRICS.keys() + NODE_EXPORTER.keys() + PROMETHEUS.keys()
 
 k8s_objects(
     name = "monitoring",
     objects = [name for name in monitoring_k3s_targets]
+)
+
+k8s_objects(
+    name = "dashboards",
+    objects = [name for name in GRAFANA.keys()]
 )
