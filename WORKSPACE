@@ -267,22 +267,31 @@ jsonnet_library(
 )
 """,
 )
-#======= END JSONNET  ======
 
 
-go_repository(
-    name = "gomodule_redigo",
-    commit = "2cd21d9966bf7ff9ae091419744f0b3fb0fecace",
-    importpath = "github.com/gomodule/redigo",
-)
 #======== Monitoring configs =====
 
+# For each jsonnet or libsonnet file
+# use PWD to try and figure out the name of the repo we are working on
+# use dirname to figure out the path from the top directory down to where the jsonnet/libsonnet file is
+# Use awk to look for import 'github.com/somerepo/subdir  and replace with import 'export somerepo/...'
+# and replace import 'subdir/whatever' with import 'external/<directory down to this point>/subdir/whatever'
+patch_json_repo = r"""
+    for f in $(find . -name "*.jsonnet" -o -name "*.libsonnet"); 
+        do awk -v prefix="${PWD##*/}/$(dirname $f)/"  '{if ( $0 ~ /github/ ) { sub(/import '\''github.com\/[^\/]*/,"import'\''external") } else { sub(/import '\''/,"import '\''external/" prefix) };  print }' $f > tmp; mv tmp $f
+    done
+    """
+
 new_git_repository(
-    name = "monitoring",
-    remote = "https://github.com/coreos/kube-prometheus.git",
-    commit = "9493a1a5f7090dca406a0e80d1986484c70c1acf",
-    build_file = "//prod:BUILD.yaml-extraction",
+    name = "kube-prometheus",
+    remote = "https://github.com/prometheus-operator/kube-prometheus.git",
+    commit = "8396c697fdaca6e9c61954f3c075c0bc40e4a76b",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1623887898 -0300",    
 )
+
+
 
 
 go_repository(
@@ -291,8 +300,100 @@ go_repository(
     importpath = "github.com/brancz/gojsontoyaml",
 )
 
+# Note that the name of the build rule ends up as the top level directory name after external.
+# So make sure the name matches what github would create as a top level folder.
+new_git_repository(
+    name = "prometheus-operator",
+    remote = "https://github.com/prometheus-operator/prometheus-operator.git",
+    commit = "05a8e6f8ccc249e9efc6774c1f822d5298d66c0d",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1623838634 +0200",
+)
+
+new_git_repository(
+    name = "kube-state-metrics",
+    remote = "https://github.com/kubernetes/kube-state-metrics.git",
+    commit = "95500e51a3144659522df603ed4e7ee7f597bc3b",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1623072520 -0700",
+)
+
+new_git_repository(
+    name = "grafonnet",
+    remote = "https://github.com/grafana/dashboard-spec.git",
+    commit = "f6b5fb6346fccf028044e8e8f6b66aacbe8bc9df",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+)
+
+new_git_repository(
+    name = "kubernetes-mixin",
+    remote = "https://github.com/kubernetes-monitoring/kubernetes-mixin.git",
+    commit = "aead52cf40f07c39794d20cc17ed08343e8ece01",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1623935087 +0200"
+)
+new_git_repository(
+    name = "alertmanager",
+    remote = "https://github.com/prometheus/alertmanager.git",
+    commit = "58169c14126074bf45cce3e168641ede9eb23e47",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1623674900 +0200"
+)
+new_git_repository(
+    name = "kubernetes-grafana",
+    remote = "https://github.com/brancz/kubernetes-grafana.git",
+    commit = "8ea4e7bc04b1bf5e9bd99918ca28c6271b42be0e",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1612196407 +0100"
+)
+new_git_repository(
+    name = "node_exporter",
+    remote = "https://github.com/prometheus/node_exporter.git",
+    commit = "8edd27baaf0cd4e443ab556329fa0f8c3b2b02a0",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1623931568 +0200"
+)
+new_git_repository(
+    name = "prometheus",
+    remote = "https://github.com/prometheus/prometheus.git",
+    commit = "60918b8415d928363ea4bc766d450e707035abe0",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1623937011 +0200"
+)
+new_git_repository(
+    name = "grafonnet-lib",
+    remote = "https://github.com/grafana/grafonnet-lib.git",
+    commit = "3082bfca110166cd69533fa3c0875fdb1b68c329",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+)
+new_git_repository(
+    name = "jsonnet-libs",
+    remote = "https://github.com/grafana/jsonnet-libs.git",
+    commit = "eac3c4cf1c2d38dc11d63b6acbda3c8b455ab712",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1623936507 +0200"
+)
+
 #======== End Monitoring configs ====
 
+#======= END JSONNET  ======
+
+
+go_repository(
+    name = "gomodule_redigo",
+    commit = "2cd21d9966bf7ff9ae091419744f0b3fb0fecace",
+    importpath = "github.com/gomodule/redigo",
+)
 
 http_file(
     name = "k3s",

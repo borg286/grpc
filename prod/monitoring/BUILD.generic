@@ -1,0 +1,10 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_library")
+
+jsonnet_library(
+    name = "libsonnet",
+    srcs = glob(["*.libsonnet"]) + glob(["*/*.libsonnet"]) + glob(["*/*/*.libsonnet"]) + glob(["*/*/*/*.libsonnet"]) + glob(["*/*/*/*/*.libsonnet"]) + glob(["*/*/*/*/*/*.libsonnet"])  + 
+           glob(["*.jsonnet"])  +glob(["*/*.jsonnet"]) + glob(["*/*/*.jsonnet"]) + glob(["*/*/*/*.jsonnet"])  +
+           glob(["*.json"]) + glob(["*/*.json"]) + glob(["*/*/*.json"]) + glob(["*/*/*/*.json"]) ,
+)

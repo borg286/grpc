@@ -1,93 +1,57 @@
-local files = {
-	[name + "-patched.json"]: std.extVar(name) for name in  std.extVar("names")
-};
+ local kp = (import 'external/kube-prometheus/jsonnet/kube-prometheus/main.libsonnet') + {
+    values+:: {
+      common+: {
+        namespace: 'monitoring',
+      },
+    },
 
+    prometheus+:: {
+      prometheus+: {
+        spec+: {  // https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+          // If a value isn't specified for 'retention', then by default the '--storage.tsdb.retention=24h' arg will be passed to prometheus by prometheus-operator.
+          // The possible values for a prometheus <duration> are:
+          //  * https://github.com/prometheus/common/blob/c7de230/model/time.go#L178 specifies "^([0-9]+)(y|w|d|h|m|s|ms)$" (years weeks days hours minutes seconds milliseconds)
+          retention: '30d',
 
-local override_panel1(panels, idx, extra_env) = (
-  local f(i, x) = (
-    if i == idx then x +{targets:[
-      if target.refId == "A" then target{expr: "sum by(container) (container_memory_working_set_bytes{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"})"}
-      else if target.refId == "B" then target{expr: "sum by(container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\", pod=\"$pod\"})"}
-      else if target.refId == "C" then target{expr: "sum by(container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\", pod=\"$pod\"})"}
-      else if target.refId == "D" then target{expr: "sum by(container) (container_memory_cache{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})"}
-      else target
-      for target in super.targets
-    ]} else x
-  );
-  std.mapWithIndex(f, panels)
-);
-local override_panel2(panels, idx, extra_env) = (
-  local f(i, x) = (
-    if i == idx then x +{targets:[
-           if target.refId == "A" then target{expr: "sum by(container) (irate(container_cpu_usage_seconds_total{job=\"kubelet\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[4m]))"}
-      else if target.refId == "B" then target{expr: "sum by(container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"cpu\", pod=\"$pod\"})"}
-      else if target.refId == "C" then target{expr: "sum by(container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", resource=\"cpu\", pod=\"$pod\"})"}
-      else target
-      for target in super.targets
-    ]} else x
-  );
-  std.mapWithIndex(f, panels)
-);
+          // Reference info: https://github.com/coreos/prometheus-operator/blob/master/Documentation/user-guides/storage.md
+          // By default (if the following 'storage.volumeClaimTemplate' isn't created), prometheus will be created with an EmptyDir for the 'prometheus-k8s-db' volume (for the prom tsdb).
+          // This 'storage.volumeClaimTemplate' causes the following to be automatically created (via dynamic provisioning) for each prometheus pod:
+          //  * PersistentVolumeClaim (and a corresponding PersistentVolume)
+          //  * the actual volume (per the StorageClassName specified below)
+          storage: {  // https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#storagespec
+            volumeClaimTemplate: {  // https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#persistentvolumeclaim-v1-core (defines variable named 'spec' of type 'PersistentVolumeClaimSpec')
+              apiVersion: 'v1',
+              kind: 'PersistentVolumeClaim',
+              spec: {
+                accessModes: ['ReadWriteOnce'],
+                // https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#resourcerequirements-v1-core (defines 'requests'),
+                // and https://kubernetes.io/docs/concepts/policy/resource-quotas/#storage-resource-quota (defines 'requests.storage')
+                resources: { requests: { storage: '100Gi' } },
+                // A StorageClass of the following name (which can be seen via `kubectl get storageclass` from a node in the given K8s cluster) must exist prior to kube-prometheus being deployed.
+                storageClassName: 'ssd',
+                // The following 'selector' is only needed if you're using manual storage provisioning (https://github.com/coreos/prometheus-operator/blob/master/Documentation/user-guides/storage.md#manual-storage-provisioning).
+                // And note that this is not supported/allowed by AWS - uncommenting the following 'selector' line (when deploying kube-prometheus to a K8s cluster in AWS) will cause the pvc to be stuck in the Pending status and have the following error:
+                //  * 'Failed to provision volume with StorageClass "ssd": claim.Spec.Selector is not supported for dynamic provisioning on AWS'
+                // selector: { matchLabels: {} },
+              },
+            },
+          },  // storage
+        },  // spec
+      },  // prometheus
+    },  // prometheus
 
-local override_row(rows) = (
-  local f(i, x) = (
-    if i == 0 then x {panels:override_panel1(super.panels, 0, {})}
-    else if i == 1 then x {panels:override_panel2(super.panels, 0, {})}
-    else x
-  );
-  std.mapWithIndex(f, rows)
-);
+  };
 
-local pod_dashboard = std.parseJson(std.filter(function (x) std.objectHas(x.data, "pods.json"), files["grafana-dashboardDefinitions-patched.json"].items)[0].data["pods.json"]);
-local new_dashboard = pod_dashboard +{rows: override_row(super.rows)};
-
-local unpatched = files + {
-        ["grafana-deployment-patched.json"] +:{spec +:{template +:{spec +:{containers:[
-            if container.name == "grafana" then container + {env +:[
-              {name: "GF_AUTH_BASIC_ENABLED",value : "false"},
-              {name: "GF_AUTH_ANONYMOUS_ENABLED",value : "true"},
-              {name: "GF_AUTH_ANONYMOUS_ORG_ROLE",value : "Admin"},
-              {name: "GF_SERVER_ROOT_URL",value : "/"},
-            ]}
-            else container
-            for container in super.containers
-        ]}}}}
-};
-
-local patched = unpatched + {
-    ["prometheus-rules-patched.json"] +: {spec+:{groups: [
-        if group.name == "k8s.rules" then group  +{rules: [
-            if rule.record == "namespace:container_cpu_usage_seconds_total:sum_rate" then rule +{
-                expr : 'sum(rate(container_cpu_usage_seconds_total{job="kubelet"}[5m])) by (namespace)'
-            }
-            else if rule.record == "node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate" then rule +{
-                expr : 'rate(container_cpu_usage_seconds_total{job="kubelet"}[5m])'
-            }
-            else if rule.record == "node_namespace_pod_container:container_memory_working_set_bytes" then rule +{
-                expr : 'container_memory_working_set_bytes{job="kubelet"} * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)'
-            }
-            else if rule.record == "node_namespace_pod_container:container_memory_rss" then rule +{
-                expr : 'container_memory_rss{job="kubelet"} * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)'
-            }
-            else if rule.record == "node_namespace_pod_container:container_memory_cache" then rule +{
-                expr : 'container_memory_cache{job="kubelet"} * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)'
-            }
-            else if rule.record == "node_namespace_pod_container:container_memory_swap" then rule +{
-                expr : 'container_memory_swap{job="kubelet"} * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)'
-            }
-            else rule
-            for rule in super.rules
-        ]}
-        else group
-        for group in super.groups
-    ]}}
-} + {
-	["grafana-dashboardDefinitions-patched.json"] +: {items:[
-	    if std.objectHas(item.data, "pods.json") then item +{data: {"pods.json": std.manifestJson(new_dashboard)}}
-	    else item
-	    for item in super.items
-	]}
-};
-
-
-unpatched
+{ ['00namespace-' + name + ".json"]: kp.kubePrometheus[name] for name in std.objectFields(kp.kubePrometheus) } +
+{
+  ['0prometheus-operator-' + name + ".json"]: kp.prometheusOperator[name]
+  for name in std.filter((function(name) name != 'serviceMonitor'), std.objectFields(kp.prometheusOperator))
+} +
+// serviceMonitor is separated so that it can be created after the CRDs are ready
+{ ['0prometheus-operator-serviceMonitor' + ".json"]: kp.prometheusOperator.serviceMonitor } +
+{ ['node-exporter-' + name + ".json"]: kp.nodeExporter[name] for name in std.objectFields(kp.nodeExporter) } +
+{ ['kube-state-metrics-' + name + ".json"]: kp.kubeStateMetrics[name] for name in std.objectFields(kp.kubeStateMetrics) } +
+{ ['alertmanager-' + name + ".json"]: kp.alertmanager[name] for name in std.objectFields(kp.alertmanager) } +
+{ ['prometheus-' + name + ".json"]: kp.prometheus[name] for name in std.objectFields(kp.prometheus) } +
+{ ['prometheus-adapter-' + name + ".json"]: kp.prometheusAdapter[name] for name in std.objectFields(kp.prometheusAdapter) } +
+{ ['grafana-' + name + ".json"]: kp.grafana[name] for name in std.objectFields(kp.grafana) }
