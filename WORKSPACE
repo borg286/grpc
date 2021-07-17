@@ -278,7 +278,7 @@ jsonnet_library(
 # and replace import 'subdir/whatever' with import 'external/<directory down to this point>/subdir/whatever'
 patch_json_repo = r"""
     for f in $(find . -name "*.jsonnet" -o -name "*.libsonnet"); 
-        do awk -v prefix="${PWD##*/}/$(dirname $f)/"  '{if ( $0 ~ /github/ ) { sub(/import '\''github.com\/[^\/]*/,"import'\''external") } else { sub(/import '\''/,"import '\''external/" prefix) };  print }' $f > tmp; mv tmp $f
+        do awk -v prefix="${PWD##*/}/$(dirname $f)/"  '{if ( $0 ~ /github/ ) { sub(/import '\''github.com\/[^\/]*/,"import'\''external") } else { sub(/import '\''/,"import '\''external/" prefix) }; sub("(import '\''external/kubernetes-mixin/./dashboards/dashboards.libsonnet'\'') +","") ;  print }' $f > tmp; mv tmp $f
     done
     """
 

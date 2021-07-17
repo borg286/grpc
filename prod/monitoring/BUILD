@@ -133,7 +133,7 @@ jsonnet_to_json(
 
 # Add in any extra dashboards you want to have on grafana
 extra_dashboards = {
-    "grpc_redis": "//java/com/examples/grpc_redis/server/monitoring:dashboard.json"
+    "grpc-redis.json": "//java/com/examples/grpc_redis/server/monitoring:dashboard.json"
 }
 # It seems that most of the time spent here is compiling base dashboards into json strings.
 # TODO: We should probably pull these out and make them bazel build targets, then inject them in here
