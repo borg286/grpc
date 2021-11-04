@@ -220,6 +220,19 @@ git_repository(
 )
 
 
+load("@io_bazel_rules_k8s//toolchains/kubectl:kubectl_configure.bzl", "kubectl_configure")
+# Download the v1.10.0 kubectl binary for the Linux x86 64 bit platform.
+http_file(
+    name="k8s_binary",
+    downloaded_file_path = "kubectl",
+    #sha256="49f7e5791d7cd91009c728eb4dc1dbf9ee1ae6a881be6b970e631116065384c3",
+    executable=True,
+    urls=["https://dl.k8s.io/release/v1.22.3/bin/linux/amd64/kubectl"],
+)
+# Configure the kubectl toolchain to use the downloaded prebuilt v1.10.0
+# kubectl binary.
+kubectl_configure(name="k8s_config", kubectl_path="@k8s_binary//file")
+
 load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_repositories")
 
 k8s_repositories()
