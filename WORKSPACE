@@ -5,15 +5,21 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_r
 
 #====== GRPC  ==============
 
-git_repository(
+
+http_archive(
     name = "rules_proto_grpc",
-    commit = "be97d01f3c8dda96a3ab688342b08de29ad2592b",
-    remote = "https://github.com/rules-proto-grpc/rules_proto_grpc.git",
+    sha256 = "28724736b7ff49a48cb4b2b8cfa373f89edfcb9e8e492a8d5ab60aa3459314c8",
+    strip_prefix = "rules_proto_grpc-4.0.1",
+    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.0.1.tar.gz"],
 )
 
 load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_toolchains", "rules_proto_grpc_repos")
 rules_proto_grpc_toolchains()
 rules_proto_grpc_repos()
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+rules_proto_dependencies()
+rules_proto_toolchains()
 
 load("@rules_proto_grpc//cpp:repositories.bzl", rules_proto_grpc_cpp_repos = "cpp_repos")
 
@@ -29,7 +35,7 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_depe
 go_rules_dependencies()
 
 go_register_toolchains(
-    go_version = "1.15.8",
+    version = "1.17.1",
 )
 
 bazel_gazelle()
@@ -45,6 +51,8 @@ rules_proto_grpc_go_repos()
 load("@rules_proto_grpc//java:repositories.bzl", rules_proto_grpc_java_repos = "java_repos")
 
 rules_proto_grpc_java_repos()
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 load("@rules_proto_grpc//python:repositories.bzl", rules_proto_grpc_python_repos = "python_repos")
 
@@ -102,11 +110,14 @@ maven_install(
     generate_compat_repositories = True,
     override_targets = IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS,
     repositories = [
-        "https://repo.maven.apache.org/maven2/",
+        #"https://repo.maven.apache.org/maven2/",
         "https://repo1.maven.org/maven2",
-        "https://mvnrepository.com",
+        #"https://mvnrepository.com",
+        "https://maven.google.com",
+
     ],
 )
+
 
 load("@maven//:compat.bzl", "compat_repositories")
 
@@ -115,14 +126,14 @@ compat_repositories()
 grpc_java_repositories()
 
 
-
 #=====Docker images======
 
 # Download the rules_docker repository at release v0.12.1
 http_archive(
     name = "io_bazel_rules_docker",
-    strip_prefix = "rules_docker-0.16.0",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.16.0/rules_docker-v0.16.0.tar.gz"],
+    sha256 = "92779d3445e7bdc79b961030b996cb0c91820ade7ffa7edca69273f404b085d5",
+    strip_prefix = "rules_docker-0.20.0",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.20.0/rules_docker-v0.20.0.tar.gz"],
 )
 
 
@@ -201,12 +212,13 @@ container_pull(
 # This requires rules_docker to be fully instantiated before
 # it is pulled in.
 # Download the rules_k8s repository at release v0.6
-http_archive(
+
+git_repository(
     name = "io_bazel_rules_k8s",
-    strip_prefix = "rules_k8s-0.6",
-    urls = ["https://github.com/bazelbuild/rules_k8s/archive/v0.6.tar.gz"],
-    sha256 = "51f0977294699cd547e139ceff2396c32588575588678d2054da167691a227ef",
+    commit = "d05cbea5c56738ef02c667c10951294928a1d64a",
+    remote = "https://github.com/bazelbuild/rules_k8s.git",
 )
+
 
 load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_repositories")
 

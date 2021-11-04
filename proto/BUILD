@@ -11,6 +11,6 @@ proto_library(
 )
 java_grpc_library(
     name = "health-java",
-    deps = ["health_proto"],
+    protos = ["health_proto"],
     visibility = ["//visibility:public"],
 )
