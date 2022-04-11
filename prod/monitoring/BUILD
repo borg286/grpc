@@ -30,15 +30,6 @@ ALERT_MANAGER = {
     "alertmanager-serviceAccount_k8s": "alertmanager-serviceAccount.json",
     "alertmanager-serviceMonitor_k8s": "alertmanager-serviceMonitor.json",
 }
-GRAFANA = {
-    "grafana-dashboardDatasources_k8s": "grafana-dashboardDatasources.json",
-    "grafana-dashboardDefinitions_k8s": "grafana-dashboardDefinitions.json",
-    "grafana-dashboardSources_k8s": "grafana-dashboardSources.json",
-    "grafana-deployment_k8s": "grafana-deployment.json",
-    "grafana-service_k8s": "grafana-service.json",
-    "grafana-serviceAccount_k8s": "grafana-serviceAccount.json",
-    "grafana-serviceMonitor_k8s": "grafana-serviceMonitor.json",
-}
 KUBE_STATE_METRICS = {
     "kube-state-metrics-clusterRole_k8s": "kube-state-metrics-clusterRole.json",
     "kube-state-metrics-clusterRoleBinding_k8s": "kube-state-metrics-clusterRoleBinding.json",
@@ -70,6 +61,15 @@ PROMETHEUS = {
     "prometheus-service_k8s": "prometheus-service.json",
     "prometheus-serviceAccount_k8s": "prometheus-serviceAccount.json",
     "prometheus-serviceMonitor_k8s": "prometheus-serviceMonitor.json",
+}
+GRAFANA = {
+    "grafana-dashboardDatasources_k8s": "grafana-dashboardDatasources.json",
+    "grafana-dashboardDefinitions_k8s": "grafana-dashboardDefinitions.json",
+    "grafana-dashboardSources_k8s": "grafana-dashboardSources.json",
+    "grafana-deployment_k8s": "grafana-deployment.json",
+    "grafana-service_k8s": "grafana-service.json",
+    "grafana-serviceAccount_k8s": "grafana-serviceAccount.json",
+    "grafana-serviceMonitor_k8s": "grafana-serviceMonitor.json",
 }
 
 # Since bazel doesn't allow dynamic importing of arbitrary dependencies, we must declare them in the
@@ -132,23 +132,20 @@ jsonnet_to_json(
 )
 
 # Add in any extra dashboards you want to have on grafana
-extra_dashboards = {
-    "grpc-redis.json": "//java/com/examples/grpc_redis/server/monitoring:dashboard.json"
-}
-# It seems that most of the time spent here is compiling base dashboards into json strings.
-# TODO: We should probably pull these out and make them bazel build targets, then inject them in here
-# like other dashboards. Pre-building them will result in the json files being computed only once rather
-# the jsonnet re-rendering the dashboards.
+# in dashboard_targets' BUILD file route the build targets to the dashboards.
+# we only list the names to keep build time short.
+extra_dashboard_names = [
+    "grpc-redis"
+]
 jsonnet_to_json(
     name = "grafana",
     src = "grafana.jsonnet",
     multiple_outputs = 1,
     outs = GRAFANA.values(),
-    ext_code = {"dashboard_keys": "%s" % extra_dashboards.keys()},
-    ext_code_file_vars = extra_dashboards.keys(),
-    ext_code_files = extra_dashboards.values(),
+    ext_code = {"dashboard_names": "%s" % extra_dashboard_names},
     deps = common_deps,
 )
+
 
 
 
@@ -181,7 +178,8 @@ k8s_objects(
     objects = [name for name in monitoring_k3s_targets]
 )
 
+
 k8s_objects(
     name = "dashboards",
-    objects = [name for name in GRAFANA.keys()]
+    objects = [name for name in GRAFANA.keys()] + ["//prod/monitoring/dashboard_targets:" + name + "_config_map" for name in extra_dashboard_names]
 )

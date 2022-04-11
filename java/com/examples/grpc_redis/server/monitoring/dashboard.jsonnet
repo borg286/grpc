@@ -6,11 +6,11 @@ local dashboard = grafana.dashboard;
 local singlestat = grafana.singlestat;
 local graphPanel = grafana.graphPanel;
 local prometheus = grafana.prometheus;
-
-
+ 
+ 
 local clusterTemplate =
   template.new(
-    name='cluster',
+    name='brian',
     datasource='$datasource',
     query='',
     current='',
@@ -46,7 +46,7 @@ local podTemplate =
 
 
 g.dashboard(
-  'My Test Dashboard',
+  'My Test Dashboard wahoo',
 )
 .addRow(
   g.row('CPU Usage')

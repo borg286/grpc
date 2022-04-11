@@ -217,6 +217,7 @@ git_repository(
     name = "io_bazel_rules_k8s",
     commit = "d05cbea5c56738ef02c667c10951294928a1d64a",
     remote = "https://github.com/bazelbuild/rules_k8s.git",
+    shallow_since = "1634602559 -0700",
 )
 
 
@@ -271,6 +272,7 @@ git_repository(
     name = "io_bazel_rules_jsonnet",
     commit = "12979862ab51358a8a5753f5a4aa0658fec9d4af",
     remote = "https://github.com/bazelbuild/rules_jsonnet.git",
+    shallow_since = "1574670556 +0100"
 )
 
 load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_repositories")
@@ -397,6 +399,7 @@ new_git_repository(
     name = "grafonnet-lib",
     remote = "https://github.com/grafana/grafonnet-lib.git",
     commit = "3082bfca110166cd69533fa3c0875fdb1b68c329",
+    shallow_since = "1621930317 +0100",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
 )
