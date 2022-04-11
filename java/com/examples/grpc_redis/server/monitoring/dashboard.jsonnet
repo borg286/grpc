@@ -51,6 +51,8 @@ g.dashboard(
 .addRow(
   g.row('CPU Usage')
   .addPanel(
-    g.panel('CPU Usage')
+    g.panel('Something') +
+    g.queryPanel('kube_pod_container_info{namespace="mrmath"}', 'something') + 
+    g.stack
   )
 )
