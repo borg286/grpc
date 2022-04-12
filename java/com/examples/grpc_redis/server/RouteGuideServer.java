@@ -51,6 +51,9 @@ import org.redisson.api.GeoPosition;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
+import io.prometheus.client.Counter;
+import io.prometheus.client.exporter.HTTPServer;
+
 
 /**
  * A sample gRPC server that serve the RouteGuide (see route_guide.proto) service.
@@ -60,6 +63,9 @@ public class RouteGuideServer {
 
   private final int port;
   private final Server server;
+
+  static final Counter requests = Counter.build()
+     .name("requests_bla").help("Total requests.").register();
 
   /** Create a RouteGuide server listening on {@code port} using {@code featureFile} database. */
   public RouteGuideServer(int port, RedissonClient redisson) throws IOException {
@@ -79,6 +85,7 @@ public class RouteGuideServer {
   /** Start serving requests. */
   public void start() throws IOException {
     server.start();
+    HTTPServer metricsServer = new HTTPServer.Builder().withPort(1234).build();
     System.out.println("Server started, listening on " + port);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -144,6 +151,7 @@ public class RouteGuideServer {
     }
 
     public boolean isHealthy() {
+      requests.inc();
       return !redisson.isShuttingDown();
     }
 

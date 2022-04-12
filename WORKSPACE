@@ -106,6 +106,12 @@ maven_install(
 
         # Joda time
         "joda-time:joda-time:2.10",
+
+        #Prometheus exporter
+        "io.prometheus:simpleclient:0.15.0",
+        "io.prometheus:simpleclient_hotspot:0.15.0",
+        "io.prometheus:simpleclient_httpserver:0.15.0",
+        "io.prometheus:simpleclient_pushgateway:0.15.0",
     ],
     generate_compat_repositories = True,
     override_targets = IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS,

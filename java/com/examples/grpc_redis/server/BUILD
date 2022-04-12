@@ -12,6 +12,8 @@ java_image(
         "//java/com/healthchecking:health-service",
         "//java/com/examples/grpc_redis:util",
         "@maven//:org_redisson_redisson_all",
+        "@maven//:io_prometheus_simpleclient",
+        "@maven//:io_prometheus_simpleclient_httpserver",
     ],
     runtime_deps = [
         "@io_netty_netty_common//jar",
