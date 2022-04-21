@@ -56,11 +56,14 @@ PROMETHEUS = {
     "prometheus-prometheusRule_k8s": "prometheus-prometheusRule.json",
     "prometheus-roleBindingConfig_k8s": "prometheus-roleBindingConfig.json",
     "prometheus-roleBindingSpecificNamespaces_k8s": "prometheus-roleBindingSpecificNamespaces.json",
+    "prometheus-roleBindingExtraNamespaces_k8s": "prometheus-roleBindingExtraNamespaces.json",
     "prometheus-roleConfig_k8s": "prometheus-roleConfig.json",
     "prometheus-roleSpecificNamespaces_k8s": "prometheus-roleSpecificNamespaces.json",
+    "prometheus-roleExtraNamespaces_k8s": "prometheus-roleExtraNamespaces.json",
     "prometheus-service_k8s": "prometheus-service.json",
     "prometheus-serviceAccount_k8s": "prometheus-serviceAccount.json",
     "prometheus-serviceMonitor_k8s": "prometheus-serviceMonitor.json",
+    "promethdus-general-serviceMonitor_k8s": "prometheus-general-serviceMonitor.json",
 }
 GRAFANA = {
     "grafana-dashboardDatasources_k8s": "grafana-dashboardDatasources.json",
@@ -123,12 +126,14 @@ jsonnet_to_json(
     deps = common_deps,
 )
 
+load("//prod:cluster_consts.bzl", "ENVS")
+
 jsonnet_to_json(
     name = "prometheus",
     src = "prometheus.jsonnet",
     multiple_outputs = 1,
     outs = PROMETHEUS.values(),
-    deps = common_deps,
+    deps = common_deps + ["//prod:envs"],
 )
 
 # Add in any extra dashboards you want to have on grafana

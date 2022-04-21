@@ -49,10 +49,10 @@ g.dashboard(
   'My Test Dashboard wahoo',
 )
 .addRow(
-  g.row('CPU Usage')
+  g.row('Custom dashboard')
   .addPanel(
-    g.panel('Something') +
-    g.queryPanel('kube_pod_container_info{namespace="mrmath"}', 'something') + 
+    g.panel('Custom counter metric') +
+    g.queryPanel('irate(custom_counter_total{sub_type="my_subtype1"}[5m])', 'something') + 
     g.stack
   )
 )

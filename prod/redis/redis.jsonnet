@@ -34,7 +34,7 @@ redis-server /tmp/redis.conf
 
 local redis = {
   redis_container: kube.Container("redis") {
-    image: "redis",
+    image: "redis:7.0-rc",
     resources: {},
     ports_+: { 
       tcp: { containerPort: 6379 },

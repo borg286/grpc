@@ -64,8 +64,8 @@ public class RouteGuideServer {
   private final int port;
   private final Server server;
 
-  static final Counter requests = Counter.build()
-     .name("requests_bla").help("Total requests.").register();
+  static final Counter counter = Counter.build()
+     .name("custom_counter").labelNames("sub_type").help("Counter of a thing.").register();
 
   /** Create a RouteGuide server listening on {@code port} using {@code featureFile} database. */
   public RouteGuideServer(int port, RedissonClient redisson) throws IOException {
@@ -151,7 +151,7 @@ public class RouteGuideServer {
     }
 
     public boolean isHealthy() {
-      requests.inc();
+      counter.labels("my_subtype1").inc();
       return !redisson.isShuttingDown();
     }
 
