@@ -36,9 +36,9 @@ local redis = {
   redis_container: kube.Container("redis") {
     image: "redis:7.0-rc",
     resources: {},
-    ports_+: { 
+    ports_ +: { 
+      gossip: { containerPort: 16379},
       tcp: { containerPort: 6379 },
-      gossip: {containerPort: 16379},
     },
     command: ["/bin/bash"],
     args: ["-c", start],
@@ -97,6 +97,15 @@ local redis = {
       name: {mountPath: "/data"},
     },
   },
+  exporter: kube.Container("exporter") {
+    image: "oliver006/redis_exporter",
+    args_: {"is-cluster": "true"},
+    resources: {},
+    ports_ +: { http: { containerPort: 9121 } },
+    env_: {
+      POD_NAMESPACE: kube.FieldRef("metadata.namespace"),
+    },
+  },
   statefulset: kube.StatefulSet(name) {
     metadata+:{namespace: envs.getName(params.env)},
     spec+: {
@@ -108,8 +117,9 @@ local redis = {
             "prestart": $.prestart,
           },
           containers_+: {
-            "sidecar": $.sidecar,
             "redis": $.redis_container,
+            "exporter": $.exporter,
+            "sidecar": $.sidecar,
           },
           volumes_+: {
             config_vol: kube.ConfigMapVolume($.redis_conf_map),
@@ -135,17 +145,31 @@ local redis = {
   service: kube.Service(name) {
     metadata+:{namespace: envs.getName(params.env)},
     // Make this a headless service so DNS lookups return pod IPs
-    spec +:{clusterIP:'None'},
+    spec +:{
+      clusterIP:'None',
+      ports +:[{name: "http", port:9121, targetPort:9121}]
+    },
+    target_pod: $.statefulset.spec.template,
+  },
+  //TODO: see if we can recollapse this into 1 service.
+  healthservice: kube.Service(name+"-health") {
+    metadata+:{namespace: envs.getName(params.env), labels+:{prometheus:"main"}},
+    // Make this a headless service so DNS lookups return pod IPs
+    spec +:{
+      ports :[{name: "http", port:9121, targetPort:9121}]
+    },
     target_pod: $.statefulset.spec.template,
   },
 };
 
 local main_name = name + "-" + namespace + "-statefulset.json";
 local service_name = name + "-" + namespace + "-svc.json";
+local service_health_name = name + "-" + namespace + "-healthsvc.json";
 local redis_conf_name = name + "-" + namespace + "-conf.json";
 
 {
   [main_name]: redis.statefulset,
   [service_name]: redis.service,
+  [service_health_name]: redis.healthservice,
   [redis_conf_name]: redis.redis_conf_map,
 }

@@ -85,7 +85,7 @@ public class RouteGuideServer {
   /** Start serving requests. */
   public void start() throws IOException {
     server.start();
-    HTTPServer metricsServer = new HTTPServer.Builder().withPort(1234).build();
+    HTTPServer metricsServer = new HTTPServer.Builder().withPort(9121).build();
     System.out.println("Server started, listening on " + port);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override

@@ -31,6 +31,14 @@ load("@k8s_object//:defaults.bzl", "k8s_object")
     template = ":%s.json" % env,
 ) for env in ENVS]
 
+
+load("@io_bazel_rules_k8s//k8s:objects.bzl", "k8s_objects")
+
+k8s_objects(
+    name = "setup",
+    objects = ENVS
+)
+
 jsonnet_to_json(
     name = "environment_names",
     src = "dummy.jsonnet",

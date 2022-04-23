@@ -17,6 +17,7 @@ def redis(name, env):
     outs = [s.format(**args) for s in [
       "{name}-{env}-statefulset.json",
       "{name}-{env}-svc.json",
+      "{name}-{env}-healthsvc.json",
       "{name}-{env}-conf.json",
     ]],
     multiple_outputs = True,
@@ -40,6 +41,11 @@ def redis(name, env):
     template = ":{name}-{env}-svc.json".format(**args),
   )
   k8s_object(
+    name = "{name}-{env}_healthservice".format(**args),
+    kind = "service",
+    template = ":{name}-{env}-healthsvc.json".format(**args),
+  )
+  k8s_object(
     name = "{name}-{env}_conf".format(**args),
     kind = "ConfigMap",
     template = ":{name}-{env}-conf.json".format(**args),
@@ -56,6 +62,7 @@ def redis(name, env):
     name = "{name}-{env}".format(**args),
     objects = [
       ":{name}-{env}_statefulset".format(**args),
+      ":{name}-{env}_healthservice".format(**args),
       ":{name}-{env}_service".format(**args),
       ":{name}-{env}_conf".format(**args),
     ],

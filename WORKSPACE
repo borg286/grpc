@@ -213,6 +213,16 @@ container_pull(
 #====== END Docker images==========
 
 
+new_git_repository(
+    name = "redis_exporter",
+    commit = "7af6f7462a0d2477eb24ba2a093de4cf6f8df995",
+    remote = "https://github.com/oliver006/redis_exporter.git",
+    build_file_content = """exports_files(glob(["**/*.json",]))""",
+    shallow_since = "1649901819 -0400",
+)
+
+
+
 #=======   K8S =======
 
 # This requires rules_docker to be fully instantiated before
@@ -287,9 +297,9 @@ jsonnet_repositories()
 
 http_archive(
     name = "kube_jsonnet",
-    url = "https://github.com/bitnami-labs/kube-libsonnet/archive/96b30825c33b7286894c095be19b7b90687b1ede.tar.gz",
-    sha256 = "2a3a4f1686ba801b4697613a3132710eb7bbe40685b23df9677318835a3c7dac",
-    strip_prefix = "kube-libsonnet-96b30825c33b7286894c095be19b7b90687b1ede",
+    url = "https://github.com/bitnami-labs/kube-libsonnet/archive/d0c4e7ed559c880499efcafc76ee51adfc62eaeb.tar.gz",
+    sha256 = "23555e0c27a85da2a7110b11143f9f5fc9cb4b046390b0f2ac8374a0c98c2e19",
+    strip_prefix = "kube-libsonnet-d0c4e7ed559c880499efcafc76ee51adfc62eaeb",
     build_file_content = """
 package(default_visibility = ["//visibility:public"])
 load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_library")

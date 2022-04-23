@@ -140,7 +140,8 @@ jsonnet_to_json(
 # in dashboard_targets' BUILD file route the build targets to the dashboards.
 # we only list the names to keep build time short.
 extra_dashboard_names = [
-    "grpc-redis"
+    "grpc-redis",
+    "redis"
 ]
 jsonnet_to_json(
     name = "grafana",

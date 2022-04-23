@@ -25,13 +25,14 @@ local general_servicemonitor = kp.prometheus["serviceMonitor"] {
     namespace: "mrmath",
   },
   spec+:{
-  endpoints:[{
-    // This needs to match the port names exported by pods.
-    port:"http",
-    interval: "1m"
-  }],
-  // This needs to match the label in services that want to be monitored
-  selector:{matchLabels:{prometheus:"main"}}}
+    endpoints:[{
+      // This needs to match the port names exported by pods.
+      port:"http",
+      interval: "1m"
+    }],
+    // This needs to match the label in services that want to be monitored
+    selector:{matchLabels:{prometheus:"main"}}
+  }
 };
 
 local patched = files +{

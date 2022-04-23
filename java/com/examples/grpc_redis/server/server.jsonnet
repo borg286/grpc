@@ -17,7 +17,7 @@ local main_container = kube.Container("server") {
   image: images[params.env],
   ports_+: {
     grpc: { containerPort: std.parseInt(params.port) },
-    http:{ containerPort: 1234 },
+    http:{ containerPort: 9121 },
   },
   args: [std.toString(params.port), redis_service.metadata.name]
 };

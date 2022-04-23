@@ -15,8 +15,8 @@ kube.Service(params.name) {
       },
       {
         name: "http",
-        port: 1234,
-        targetPort: 1234,
+        port: 9121,
+        targetPort: 9121,
       },
     ],
     type: "ClusterIP",
