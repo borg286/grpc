@@ -95,7 +95,7 @@ common_deps = [
 # stacks like the alert manager, node-exporter, grafana, custom resource definitions...
 # jsonnet_to_json executes these jsonnet files to produce a set of json files.
 jsonnet_to_json(
-    name = "setup",
+    name = "setup-json",
     src = "setup.jsonnet",
     multiple_outputs = 1,
     outs = SETUP.values(),
@@ -172,10 +172,9 @@ for group in [SETUP, ALERT_MANAGER, GRAFANA, KUBE_STATE_METRICS, NODE_EXPORTER, 
 load("@io_bazel_rules_k8s//k8s:objects.bzl", "k8s_objects")
 
 k8s_objects(
-    name = "monitoring-setup",
+    name = "setup",
     objects = [name for name in SETUP.keys()]
 )
-
 
 monitoring_k3s_targets = ALERT_MANAGER.keys() + KUBE_STATE_METRICS.keys() + NODE_EXPORTER.keys() + PROMETHEUS.keys()
 
@@ -183,7 +182,6 @@ k8s_objects(
     name = "monitoring",
     objects = [name for name in monitoring_k3s_targets]
 )
-
 
 k8s_objects(
     name = "dashboards",

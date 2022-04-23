@@ -5,7 +5,8 @@ load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_to_json")
 # Add in any extra dashboards you want to have on grafana
 extra_dashboards = {
     "grpc-redis": "//java/com/examples/grpc_redis/server/monitoring:dashboard.json",
-    "redis": "@redis_exporter//:contrib/redis-mixin/dashboards/redis-overview.json",
+    "redis": "redis.json",
+    #"redis": "@redis_exporter//:contrib/redis-mixin/dashboards/redis-overview.json",
 }
 
 [jsonnet_to_json(
