@@ -5,12 +5,101 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_r
 
 #====== GRPC  ==============
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "rules_python",
+    sha256 = "cdf6b84084aad8f10bf20b46b77cb48d83c319ebe6458a18e9d2cebf57807cdd",
+    strip_prefix = "rules_python-0.8.1",
+    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.8.1.tar.gz",
+)
+
+#load("@rules_python//python:repositories.bzl", "python_register_toolchains")
+
+#python_register_toolchains(
+#  name = "python3_9",
+#  python_version = "3.9",
+#)
+
+#new_local_repository(
+#    name = "python_linux",
+#    path = "/usr",
+#    build_file_content = """
+#cc_library(
+#    name = "python39-lib",
+#    srcs = ["lib/lib/python3.9/config-3.9-x86_64-linux-gnu/libpython3.9.so"],
+#    hdrs = glob(["include/python3.9/*.h"]),
+#    includes = ["include/python3.9"],
+#    visibility = ["//visibility:public"]
+#)
+#    """
+#)
+
+#load("@python3_9//:defs.bzl", "interpreter")
+
+
+
+_configure_python_based_on_os = """
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    ./configure --prefix=$(pwd)/bazel_install --with-openssl=$(brew --prefix openssl)
+else
+    ./configure --prefix=$(pwd)/bazel_install
+fi
+"""
+
+# Fetch Python and build it from scratch
+http_archive(
+    name = "python_interpreter",
+    build_file_content = """
+exports_files(["python_bin"])
+filegroup(
+    name = "files",
+    srcs = glob(["bazel_install/**"], exclude = ["**/* *"]),
+    visibility = ["//visibility:public"],
+)
+""",
+    patch_cmds = [
+        "mkdir $(pwd)/bazel_install",
+        _configure_python_based_on_os,
+        "make",
+        "make install",
+        "ln -s bazel_install/bin/python3 python_bin",
+    ],
+    sha256 = "dfab5ec723c218082fe3d5d7ae17ecbdebffa9a1aea4d64aa3a2ecdd2e795864",
+    strip_prefix = "Python-3.8.3",
+    urls = ["https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tar.xz"],
+)
+
+# Fetch official Python rules for Bazel
+http_archive(
+    name = "rules_python",
+    sha256 = "b6d46438523a3ec0f3cead544190ee13223a52f6a6765a29eae7b7cc24cc83a0",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz",
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+
+
+load("@rules_python//python:pip.bzl", "pip_install")
+
+pip_install(
+  name = "py_deps",
+  python_interpreter_target = "@python_interpreter//:python_bin",
+  requirements = "//python:requirements.txt",
+  quiet = False,
+  #environment = {"GRPC_PYTHON_BUILD_SYSTEM_ZLIB": "true"},
+)
+
+# The Python toolchain must be registered ALWAYS at the end of the file
+register_toolchains("//:py_3_toolchain")
 
 http_archive(
     name = "rules_proto_grpc",
-    sha256 = "28724736b7ff49a48cb4b2b8cfa373f89edfcb9e8e492a8d5ab60aa3459314c8",
-    strip_prefix = "rules_proto_grpc-4.0.1",
-    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.0.1.tar.gz"],
+    sha256 = "507e38c8d95c7efa4f3b1c0595a8e8f139c885cb41a76cab7e20e4e67ae87731",
+    strip_prefix = "rules_proto_grpc-4.1.1",
+    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.1.1.tar.gz"],
 )
 
 load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_toolchains", "rules_proto_grpc_repos")
@@ -54,21 +143,19 @@ rules_proto_grpc_java_repos()
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
+
+
+
 load("@rules_proto_grpc//python:repositories.bzl", rules_proto_grpc_python_repos = "python_repos")
 
 rules_proto_grpc_python_repos()
 
+
+
+
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 
 grpc_deps()
-
-load("@rules_python//python:pip.bzl", "pip_install")
-
-pip_install(
-    name = "rules_proto_grpc_py3_deps",
-    python_interpreter = "python3",
-    requirements = "@rules_proto_grpc//python:requirements.txt",
-)
 
 
 
@@ -137,9 +224,9 @@ grpc_java_repositories()
 # Download the rules_docker repository at release v0.12.1
 http_archive(
     name = "io_bazel_rules_docker",
-    sha256 = "92779d3445e7bdc79b961030b996cb0c91820ade7ffa7edca69273f404b085d5",
-    strip_prefix = "rules_docker-0.20.0",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.20.0/rules_docker-v0.20.0.tar.gz"],
+    sha256 = "27d53c1d646fc9537a70427ad7b034734d08a9c38924cc6357cc973fed300820",
+    strip_prefix = "rules_docker-0.24.0",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.24.0/rules_docker-v0.24.0.tar.gz"],
 )
 
 
@@ -190,7 +277,7 @@ _cc_image_repos()
 
 
 load(
-    "@io_bazel_rules_docker//python:image.bzl",
+    "@io_bazel_rules_docker//python3:image.bzl",
     _py_image_repos = "repositories",
 )
 _py_image_repos()
