@@ -221,7 +221,7 @@ grpc_java_repositories()
 
 #=====Docker images======
 
-# Download the rules_docker repository at release v0.12.1
+# Download the rules_docker repository at release v0.24.0
 http_archive(
     name = "io_bazel_rules_docker",
     sha256 = "27d53c1d646fc9537a70427ad7b034734d08a9c38924cc6357cc973fed300820",
@@ -371,16 +371,25 @@ k8s_defaults(
 #====== JSONNET  =====
 # We use jsonnet to configure the kubernetes deployments, services...
 
-git_repository(
+
+http_archive(
     name = "io_bazel_rules_jsonnet",
-    commit = "12979862ab51358a8a5753f5a4aa0658fec9d4af",
-    remote = "https://github.com/bazelbuild/rules_jsonnet.git",
-    shallow_since = "1574670556 +0100"
+    sha256 = "d20270872ba8d4c108edecc9581e2bb7f320afab71f8caa2f6394b5202e8a2c3",
+    strip_prefix = "rules_jsonnet-0.4.0",
+    urls = ["https://github.com/bazelbuild/rules_jsonnet/archive/0.4.0.tar.gz"],
 )
 
 load("@io_bazel_rules_jsonnet//jsonnet:jsonnet.bzl", "jsonnet_repositories")
 
 jsonnet_repositories()
+
+load("@google_jsonnet_go//bazel:repositories.bzl", "jsonnet_go_repositories")
+
+jsonnet_go_repositories()
+
+load("@google_jsonnet_go//bazel:deps.bzl", "jsonnet_go_dependencies")
+
+jsonnet_go_dependencies()
 
 http_archive(
     name = "kube_jsonnet",
