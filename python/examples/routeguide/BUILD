@@ -4,7 +4,7 @@ load("@rules_proto_grpc//python:defs.bzl", "python_grpc_library")
 
 python_grpc_library(
     name = "routeguide",
-    deps = ["//proto/examples/routeguide:routeguide_proto"],
+    protos = ["//proto/examples/routeguide:routeguide_proto"],
 )
 
 py_library(

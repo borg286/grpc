@@ -1,16 +1,55 @@
-load("@io_bazel_rules_docker//python:image.bzl", "py_image")
-
-py_image(
+load("@io_bazel_rules_docker//python3:image.bzl", "py3_image", "py_layer")
+load("@my_pip_install//:requirements.bzl", "requirement")
+# We are synthesizing an image that depends on a complex set
+# of libraries that we want to break into layers.
+LIBS = [
+    "//python/examples/routeguide:resources",
+    "//python/examples/routeguide:routeguide",
+    "@python_linux//:python39-lib",
+]
+# First, we extract all transitive dependencies of LIBS that are under //pkg/common.
+py_layer(
+    name = "common_deps",
+    deps = LIBS,
+    filter = "//python",
+)
+# Then, we further extract all external dependencies of the deps.
+py_layer(
+    name = "common_external_deps",
+    deps = [":common_deps"],
+    filter = "@",
+)
+# We also extract all external dependencies of LIBS, which is a superset of
+# ":common_external_deps".
+py_layer(
+    name = "external_deps",
+    deps = LIBS,
+    filter = "@",
+)
+py3_image(
     name = "server-image",
     srcs = [
         "server.py",
     ],
+    srcs_version = "PY3",
     main = "server.py",
     data = ["//proto/examples/routeguide:routeguide_features"],
-    deps = [
-        "//py/examples/routeguide:resources",
-        "//py/examples/routeguide:routeguide",
+    deps = LIBS,
+    layers = [
+        ":common_external_deps",
+        ":common_deps",
+        ":external_deps",
     ],
+)
+py_binary(
+    name = "server",
+    srcs = [
+        "server.py",
+    ],
+    srcs_version = "PY3",
+    main = "server.py",
+    data = ["//proto/examples/routeguide:routeguide_features"],
+    deps = LIBS,
 )
 
 NAME = "py"
