@@ -6,37 +6,6 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_r
 #====== GRPC  ==============
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-http_archive(
-    name = "rules_python",
-    sha256 = "cdf6b84084aad8f10bf20b46b77cb48d83c319ebe6458a18e9d2cebf57807cdd",
-    strip_prefix = "rules_python-0.8.1",
-    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.8.1.tar.gz",
-)
-
-#load("@rules_python//python:repositories.bzl", "python_register_toolchains")
-
-#python_register_toolchains(
-#  name = "python3_9",
-#  python_version = "3.9",
-#)
-
-#new_local_repository(
-#    name = "python_linux",
-#    path = "/usr",
-#    build_file_content = """
-#cc_library(
-#    name = "python39-lib",
-#    srcs = ["lib/lib/python3.9/config-3.9-x86_64-linux-gnu/libpython3.9.so"],
-#    hdrs = glob(["include/python3.9/*.h"]),
-#    includes = ["include/python3.9"],
-#    visibility = ["//visibility:public"]
-#)
-#    """
-#)
-
-#load("@python3_9//:defs.bzl", "interpreter")
-
-
 
 _configure_python_based_on_os = """
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -45,29 +14,6 @@ else
     ./configure --prefix=$(pwd)/bazel_install
 fi
 """
-
-# Fetch Python and build it from scratch
-http_archive(
-    name = "python_interpreter",
-    build_file_content = """
-exports_files(["python_bin"])
-filegroup(
-    name = "files",
-    srcs = glob(["bazel_install/**"], exclude = ["**/* *"]),
-    visibility = ["//visibility:public"],
-)
-""",
-    patch_cmds = [
-        "mkdir $(pwd)/bazel_install",
-        _configure_python_based_on_os,
-        "make",
-        "make install",
-        "ln -s bazel_install/bin/python3 python_bin",
-    ],
-    sha256 = "dfab5ec723c218082fe3d5d7ae17ecbdebffa9a1aea4d64aa3a2ecdd2e795864",
-    strip_prefix = "Python-3.8.3",
-    urls = ["https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tar.xz"],
-)
 
 # Fetch official Python rules for Bazel
 http_archive(
@@ -86,14 +32,11 @@ load("@rules_python//python:pip.bzl", "pip_install")
 
 pip_install(
   name = "py_deps",
-  python_interpreter_target = "@python_interpreter//:python_bin",
   requirements = "//python:requirements.txt",
   quiet = False,
   #environment = {"GRPC_PYTHON_BUILD_SYSTEM_ZLIB": "true"},
 )
 
-# The Python toolchain must be registered ALWAYS at the end of the file
-register_toolchains("//:py_3_toolchain")
 
 http_archive(
     name = "rules_proto_grpc",
