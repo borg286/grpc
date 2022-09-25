@@ -87,7 +87,8 @@ common_deps = [
     "@node_exporter//:libsonnet",
     "@prometheus//:libsonnet",
     "@grafonnet-lib//:libsonnet",
-    "@jsonnet-libs//:libsonnet"
+    "@jsonnet-libs//:libsonnet",
+    "@grafana//:libsonnet",
 ]
 
 

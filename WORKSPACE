@@ -367,7 +367,7 @@ patch_json_repo = r"""
 new_git_repository(
     name = "kube-prometheus",
     remote = "https://github.com/prometheus-operator/kube-prometheus.git",
-    commit = "8396c697fdaca6e9c61954f3c075c0bc40e4a76b",
+    commit = "5b28779e7ded6bd6eed223006c364e514e3c9913",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
     shallow_since = "1623887898 -0300",    
@@ -396,16 +396,16 @@ new_git_repository(
 new_git_repository(
     name = "kube-state-metrics",
     remote = "https://github.com/kubernetes/kube-state-metrics.git",
-    commit = "95500e51a3144659522df603ed4e7ee7f597bc3b",
+    commit = "12402a564cbf4557763079ab8e6e995d9afb4db9",
     build_file = "//prod/monitoring:BUILD.generic",
+    shallow_since = "1663939105 -0700",
     patch_cmds = [patch_json_repo],
-    shallow_since = "1623072520 -0700",
 )
 
 new_git_repository(
     name = "grafonnet",
     remote = "https://github.com/grafana/dashboard-spec.git",
-    commit = "f6b5fb6346fccf028044e8e8f6b66aacbe8bc9df",
+    commit = "0090a6415a9674e7716a6e08d129501a8c398d98",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
 )
@@ -413,58 +413,65 @@ new_git_repository(
 new_git_repository(
     name = "kubernetes-mixin",
     remote = "https://github.com/kubernetes-monitoring/kubernetes-mixin.git",
-    commit = "aead52cf40f07c39794d20cc17ed08343e8ece01",
+    commit = "5e44626d70c2bf2d35c37f3fee5a6261a5335cc6",
     build_file = "//prod/monitoring:BUILD.generic",
+    shallow_since = "1663065655 +0300",
     patch_cmds = [patch_json_repo],
-    shallow_since = "1623935087 +0200"
 )
 new_git_repository(
     name = "alertmanager",
     remote = "https://github.com/prometheus/alertmanager.git",
-    commit = "58169c14126074bf45cce3e168641ede9eb23e47",
+    commit = "33a0e77a7143fd0795ee20f2e45bbdfffb2dbbbb",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
-    shallow_since = "1623674900 +0200"
+    shallow_since = "1663850717 +0200",
 )
 new_git_repository(
     name = "kubernetes-grafana",
     remote = "https://github.com/brancz/kubernetes-grafana.git",
-    commit = "8ea4e7bc04b1bf5e9bd99918ca28c6271b42be0e",
+    commit = "d039275e4916aceae1c137120882e01d857787ac",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
-    shallow_since = "1612196407 +0100"
+    shallow_since = "1649065985 +0200",
 )
 new_git_repository(
     name = "node_exporter",
     remote = "https://github.com/prometheus/node_exporter.git",
-    commit = "8edd27baaf0cd4e443ab556329fa0f8c3b2b02a0",
+    commit = "e0845a81fd99c32aa227f78bfddf6a74f3fec98d",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
-    shallow_since = "1623931568 +0200"
+    shallow_since = "1664003803 +0200",
 )
 new_git_repository(
     name = "prometheus",
     remote = "https://github.com/prometheus/prometheus.git",
-    commit = "60918b8415d928363ea4bc766d450e707035abe0",
+    commit = "734772f82824db11344ea3c39a166449d0e7e468",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
-    shallow_since = "1623937011 +0200"
+    shallow_since = "1663834906 +0200",
 )
 new_git_repository(
     name = "grafonnet-lib",
     remote = "https://github.com/grafana/grafonnet-lib.git",
-    commit = "3082bfca110166cd69533fa3c0875fdb1b68c329",
-    shallow_since = "1621930317 +0100",
+    commit = "30280196507e0fe6fa978a3e0eaca3a62844f817",
+    build_file = "//prod/monitoring:BUILD.generic",
+    patch_cmds = [patch_json_repo],
+    shallow_since = "1657001913 +0100",
+)
+new_git_repository(
+    name = "grafana",
+    remote = "https://github.com/grafana/grafana.git",
+    commit = "f8bde4df09ea8449693f0ed63bab9d4ef5179d63",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
 )
 new_git_repository(
     name = "jsonnet-libs",
     remote = "https://github.com/grafana/jsonnet-libs.git",
-    commit = "eac3c4cf1c2d38dc11d63b6acbda3c8b455ab712",
+    commit = "351bfae3eee23db305597f272ef29ec16f99ee49",
     build_file = "//prod/monitoring:BUILD.generic",
     patch_cmds = [patch_json_repo],
-    shallow_since = "1623936507 +0200"
+    shallow_since = "1663667259 +0200",
 )
 
 #======== End Monitoring configs ====
