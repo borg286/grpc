@@ -59,29 +59,8 @@ jsonnet_library(
 )
 
 
-jsonnet_to_json(
-    name = "registry",
-    src = "registry.jsonnet",
-    outs = ["registry-depl.json", "registry-svc.json"],
-    deps = ["@kube_jsonnet//:kube_lib"],
-)
-
 load("@k8s_object//:defaults.bzl", "k8s_object")
 load("@io_bazel_rules_k8s//k8s:objects.bzl", "k8s_objects")
-
-k8s_object(
-    name = "registry-depl",
-    template = ":registry-depl.json",
-)
-k8s_object(
-    name = "registry-svc",
-    template = ":registry-svc.json",
-)
-k8s_objects(
-    name = "local-registry",
-    objects = [":registry-depl", ":registry-svc"],
-)
-
 
 
 k8s_object(
