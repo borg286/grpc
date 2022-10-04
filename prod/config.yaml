@@ -2,11 +2,24 @@
 # use as k3d cluster create --config /path/to/this/file
 apiVersion: k3d.io/v1alpha4 # this will change in the future as we make everything more stable
 kind: Simple # internally, we also have a Cluster config, which is not yet available externally
+metadata:
+  name: default # name that you want to give to your cluster (will still be prefixed with `k3d-`)
 registries: # define how registries should be created or used
   create: # creates a default registry to be used with the cluster; same as `--registry-create registry.localhost`
     name: registry.localhost
     host: "0.0.0.0"
     hostPort: "5000"
+    volumes:
+      - /tmp/registry:/var/lib/registry # persist registry data locally
   kubeconfig:
     updateDefaultKubeconfig: true # add new cluster to your default Kubeconfig; same as `--kubeconfig-update-default` (default: true)
     switchCurrentContext: true # also set current-context to the new cluster's context; same as `--kubeconfig-switch-context` (default: true)
+options:
+  k3s: # options passed on to K3s itself
+    extraArgs: # additional arguments passed to the `k3s server|agent` command; same as `--k3s-arg`
+      - arg: --kubelet-arg=authentication-token-webhook=true
+        nodeFilters:
+          - server:*
+      - arg: --kubelet-arg=authorization-mode=Webhook
+        nodeFilters:
+          - server:*

@@ -1,5 +1,5 @@
 PROJECT = "fiery-orb-681"
-CLUSTER = "k3d-k3s-default"
+CLUSTER = "k3d-default"
 # One can run a local registry like https://rancher.com/docs/k3s/latest/en/installation/private-registry/
 # This one follows the defaults here https://k3d.io/v5.4.6/usage/configfile/
 REGISTRY = "registry.localhost:5000"
