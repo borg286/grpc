@@ -240,7 +240,7 @@ k8s_objects(
     objects = [name for name in SETUP.keys()]
 )
 
-monitoring_k3s_targets = ALERT_MANAGER.keys() + KUBE_STATE_METRICS.keys() + NODE_EXPORTER.keys() + PROMETHEUS.keys()
+monitoring_k3s_targets = ALERT_MANAGER.keys() + KUBE_STATE_METRICS.keys() + NODE_EXPORTER.keys() + PROMETHEUS.keys() + PROMETHEUS_ADAPTOR.keys() + KUBERNETES_CONTROL_PLANE.keys() + BLACKBOX_EXPORTER.keys()
 
 k8s_objects(
     name = "monitoring",
