@@ -251,6 +251,12 @@ new_git_repository(
     shallow_since = "1649901819 -0400",
 )
 
+go_repository(
+    name = "gomodule_redigo",
+    commit = "2cd21d9966bf7ff9ae091419744f0b3fb0fecace",
+    importpath = "github.com/gomodule/redigo",
+)
+
 
 
 #=======   K8S =======
@@ -479,15 +485,31 @@ new_git_repository(
 #======= END JSONNET  ======
 
 
-go_repository(
-    name = "gomodule_redigo",
-    commit = "2cd21d9966bf7ff9ae091419744f0b3fb0fecace",
-    importpath = "github.com/gomodule/redigo",
+#========  Helm Charts =====
+
+git_repository(
+    name = "com_github_masmovil_bazel_rules",
+    # tag = "0.2.2",
+    commit = "7bd160b5fe0354052e98b1dfb0cc6c4300b58026",
+    remote = "https://github.com/masmovil/bazel-rules.git",
+    shallow_since = "1656496458 +0200",
 )
 
-http_file(
-    name = "k3s",
-    urls = ["https://github.com/k3s-io/k3s/releases/download/v1.19.10%2Bk3s1/k3s"],
-    sha256 = "740451d8914477d4917338f55a321ad34af75dc59782b387088b8c1a3d33d607",
-    executable = True,
+load(
+    "@com_github_masmovil_bazel_rules//repositories:repositories.bzl",
+    mm_repositories = "repositories",
 )
+mm_repositories()
+
+
+# Istio
+http_archive(
+    name = "istio_gateway",
+    build_file = "//prod/istio:BUILD.istio",
+    sha256 = "17206af64f9e580ac4f901006737e1dfadbda9cf54211f2143529f92e111dbc0",
+    url = "https://istio-release.storage.googleapis.com/charts/gateway-1.15.1.tgz",
+    type = "tgz",
+    strip_prefix = "gateway",
+)
+
+#======= END Helm  ======
