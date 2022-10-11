@@ -1,0 +1,14 @@
+#image:
+#  repository: scylladb
+#  pullPolicy: IfNotPresent
+#  tag: ""
+#resources:
+#  limits:
+#    cpu: 100m
+#    memory: 128Mi
+#  requests:
+#    cpu: 100m
+#    memory: 32Mi
+#webhook:
+#  createSelfSignedCertificate: true
+#  certificateSecretName: ""

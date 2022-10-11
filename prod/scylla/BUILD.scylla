@@ -1,0 +1,12 @@
+# This file is referenced from the WORKSPACE, in the Helm section.
+load("@com_github_masmovil_bazel_rules//helm:helm.bzl", "helm_chart")
+
+package(default_visibility = ["//visibility:public"])
+
+
+helm_chart(
+    name = "scylla",
+    package_name = "scylla",
+    srcs = glob(["**"]),
+    helm_chart_version = "1.7.4",
+)

@@ -1,0 +1,23 @@
+#scyllaImage:
+#  repository: scylladb/scylla
+#  tag: 4.3.0
+
+#agentImage:
+#  repository: scylladb/scylla-manager-agent
+#  tag: 2.2.1
+
+datacenter: us-east-1
+racks:
+- name: us-east-1b
+  members: 2
+  storage:
+    capacity: 5G
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
+serviceMonitor:
+  create: false

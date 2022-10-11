@@ -512,4 +512,27 @@ http_archive(
     strip_prefix = "gateway",
 )
 
+# Scylla
+http_archive(
+    name = "scylla_operator",
+    build_file = "//prod/scylla:BUILD.scylla-operator",
+    url = "https://scylla-operator-charts.storage.googleapis.com/latest/scylla-operator-1.7.4-rc.0.tgz",
+    type = "tgz",
+    strip_prefix = "scylla-operator",
+)
+http_archive(
+    name = "scylla",
+    build_file = "//prod/scylla:BUILD.scylla",
+    url = "https://scylla-operator-charts.storage.googleapis.com/latest/scylla-1.7.4-rc.0.tgz",
+    type = "tgz",
+    strip_prefix = "scylla",
+)
+http_archive(
+    name = "scylla_manager",
+    build_file = "//prod/scylla:BUILD.scylla-manager",
+    url = "https://scylla-operator-charts.storage.googleapis.com/latest/scylla-manager-1.7.4-rc.0.tgz",
+    type = "tgz",
+    strip_prefix = "scylla-manager",
+)
+
 #======= END Helm  ======
