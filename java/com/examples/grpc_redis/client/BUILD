@@ -11,6 +11,8 @@ java_binary(
     main_class = "io.grpc.examples.grpc_redis.RouteGuideClient",
     resources = ["//java/com/examples/routeguide:route_guide_db.json"],
     deps = [
+        "@maven//:com_github_pcj_google_options",
+        "@maven//:com_google_guava_guava",
         "//java/com/examples/grpc_redis:routeguide",
         "//java/com/examples/grpc_redis:util",
         "@maven//:org_redisson_redisson_all",
@@ -30,6 +32,8 @@ java_image(
     main_class = "io.grpc.examples.grpc_redis.RouteGuideClient",
     resources = ["//java/com/examples/routeguide:route_guide_db.json"],
     deps = [
+        "@maven//:com_github_pcj_google_options",
+        "@maven//:com_google_guava_guava",
         "//java/com/examples/grpc_redis:routeguide",
         "//java/com/examples/grpc_redis:util",
         "@maven//:org_redisson_redisson_all",

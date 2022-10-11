@@ -8,6 +8,8 @@ java_image(
     main_class = "io.grpc.examples.grpc_redis.RouteGuideServer",
     resources = ["//java/com/examples/grpc_redis:route_guide_db.json"],
     deps = [
+        "@maven//:com_github_pcj_google_options",
+        "@maven//:com_google_guava_guava",
         "//java/com/examples/grpc_redis:routeguide",
         "//java/com/healthchecking:health-service",
         "//java/com/examples/grpc_redis:util",

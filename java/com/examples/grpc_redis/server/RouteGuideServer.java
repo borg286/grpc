@@ -25,6 +25,9 @@ import static java.lang.Math.sqrt;
 import static java.lang.Math.toRadians;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
+import com.google.devtools.common.options.Option;
+import com.google.devtools.common.options.OptionsBase;
+import com.google.devtools.common.options.OptionsParser;
 import io.grpc.examples.routeguide.*;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -115,17 +118,63 @@ public class RouteGuideServer {
   }
 
   /**
+   * Command-line options for example server.
+   */
+  public static class ServerOptions extends OptionsBase {
+
+
+    @Option(
+        name = "help",
+        abbrev = 'h',
+        help = "Prints usage info.",
+        defaultValue = "true"
+      )
+    public boolean help;
+
+    @Option(
+        name = "redis_endpoint",
+        abbrev = 'r',
+        help = "The endpoint of the redis database of features.",
+        category = "startup",
+        defaultValue = ""
+    )
+    public String redis_endpoint;
+
+    @Option(
+      name = "port",
+      abbrev = 'p',
+      help = "The port to run on.",
+      category = "startup",
+      defaultValue = "8080"
+      )
+      public int port;
+
+
+  }
+  private static void printUsage(OptionsParser parser) {
+    System.out.println("Usage: java -jar server.jar OPTIONS");
+    System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
+                                              OptionsParser.HelpVerbosity.LONG));
+  }
+  /**
    * Main method.  This comment makes the linter happy.
    */
   public static void main(String[] args) throws Exception {
     logger.addHandler(new StreamHandler(System.out, new SimpleFormatter()));
-    System.out.println("Using port " + args[0]);
+    OptionsParser parser = OptionsParser.newOptionsParser(ServerOptions.class);
+    parser.parseAndExitUponError(args);
+    ServerOptions options = parser.getOptions(ServerOptions.class);
+    if (options.redis_endpoint.isEmpty() || options.port < 0) {
+      printUsage(parser);
+      return;
+    }
+    System.out.println("Using port " + options.port);
     Config config = new Config();
     System.out.println("creating redisson config");
-    config.useClusterServers().addNodeAddress("redis://" + args[1] + ":6379");
+    config.useClusterServers().addNodeAddress("redis://" + options.redis_endpoint + ":6379");
     RedissonClient redisson = Redisson.create(config);
     System.out.println("Creating RouteGuideServer");
-    RouteGuideServer server = new RouteGuideServer(Integer.parseInt(args[0]), redisson);
+    RouteGuideServer server = new RouteGuideServer(options.port, redisson);
     System.out.println("Starting Server");
     server.start();
     System.out.println("Blocking until Shutdown");

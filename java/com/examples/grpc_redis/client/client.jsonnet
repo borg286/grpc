@@ -17,10 +17,10 @@ local main_container = kube.Container("server") {
   resources: {},
   image: images[params.env],
   args: [
-    backend_service.metadata.name,
-    std.toString(backend_service.spec.ports[0].port),
-    redis_service.metadata.name,
-    "100000",
+    "--host", backend_service.metadata.name,
+    "--port", std.toString(backend_service.spec.ports[0].port),
+    "--redis_endpoint", redis_service.metadata.name,
+    "--n", "100000",
   ],
 };
 

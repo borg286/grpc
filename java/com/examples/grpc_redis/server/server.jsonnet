@@ -19,7 +19,10 @@ local main_container = kube.Container("server") {
     grpc: { containerPort: std.parseInt(params.port) },
     http:{ containerPort: 9121 },
   },
-  args: [std.toString(params.port), redis_service.metadata.name]
+  args: [
+    "--port", std.toString(params.port),
+    "--redis_endpoint", redis_service.metadata.name
+  ]
 };
 
 local health_sidecar = kube.Container("health") {

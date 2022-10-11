@@ -16,6 +16,9 @@
 
 package io.grpc.examples.grpc_redis;
 
+import com.google.devtools.common.options.Option;
+import com.google.devtools.common.options.OptionsBase;
+import com.google.devtools.common.options.OptionsParser;
 import io.grpc.examples.routeguide.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.Message;
@@ -28,6 +31,7 @@ import io.grpc.examples.routeguide.RouteGuideGrpc.RouteGuideBlockingStub;
 import io.grpc.examples.routeguide.RouteGuideGrpc.RouteGuideStub;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -261,17 +265,79 @@ public class RouteGuideClient {
     return finishLatch;
   }
 
+
+  /**
+   * Command-line options for example server.
+   */
+  public static class ServerOptions extends OptionsBase {
+
+
+    @Option(
+        name = "help",
+        abbrev = 'h',
+        help = "Prints usage info.",
+        defaultValue = "true"
+      )
+    public boolean help;
+
+    @Option(
+        name = "redis_endpoint",
+        abbrev = 'r',
+        help = "The endpoint of the redis database of features.",
+        category = "startup",
+        defaultValue = ""
+    )
+    public String redis_endpoint;
+
+    @Option(
+        name = "host",
+        abbrev = 'o',
+        help = "The route guide endpoint.",
+        category = "startup",
+        defaultValue = "localhost"
+    )
+    public String host;
+
+    @Option(
+      name = "port",
+      abbrev = 'p',
+      help = "The route guide port.",
+      category = "startup",
+      defaultValue = "8080"
+      )
+      public int port;
+
+    @Option(
+      name = "n",
+      abbrev = 'n',
+      help = "The number of features to report.",
+      category = "startup",
+      defaultValue = "10"
+      )
+      public int n;
+
+
+  }
+  private static void printUsage(OptionsParser parser) {
+    System.out.println("Usage: java -jar server.jar OPTIONS");
+    System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
+                                              OptionsParser.HelpVerbosity.LONG));
+  }
   /** Issues several different requests and then exits. */
   public static void main(String[] args) throws InterruptedException {
-    String target = "localhost";
-    if (args.length >= 2) {
-      int port = Integer.parseInt(args[1]);
-      target = "dns:///" + args[0] + ".mrmath.svc.cluster.local:" + port;// + ".svc.cluster.local";
-      //target = "10.42.0.8:" + port;
-      System.out.println("Using target: " + target); 
+    OptionsParser parser = OptionsParser.newOptionsParser(ServerOptions.class);
+    parser.parseAndExitUponError(args);
+    ServerOptions options = parser.getOptions(ServerOptions.class);
+    if (options.redis_endpoint.isEmpty() || options.host.isEmpty() || options.port < 0 || options.n < 0) {
+      printUsage(parser);
+      return;
     }
+
+    String target = "dns:///" + options.host + ".mrmath.svc.cluster.local:" + options.port;// + ".svc.cluster.local";
+    System.out.println("Using target: " + target); 
+    
     Config config = new Config();
-    config.useClusterServers().addNodeAddress("redis://" + args[2] + ":6379");
+    config.useClusterServers().addNodeAddress("redis://" + options.redis_endpoint + ":6379");
     RedissonClient redisson = Redisson.create(config);
     RouteGuideClient client = new RouteGuideClient(target, redisson);
 
@@ -283,7 +349,7 @@ public class RouteGuideClient {
 
       // Feature missing.
       client.getFeature(0, 0);
-      for (int i=0; i < Integer.parseInt(args[3]); i++) {
+      for (int i=0; i < options.n; i++) {
         // Looking for features between 40, -75 and 42, -73.
         client.listFeatures(400000000, -750000000, 420000000, -730000000);
         Thread.sleep(client.random.nextInt(1000) + 1500);
