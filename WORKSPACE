@@ -58,6 +58,19 @@ load("@rules_proto_grpc//cpp:repositories.bzl", rules_proto_grpc_cpp_repos = "cp
 rules_proto_grpc_cpp_repos()
 
 
+http_archive(
+    name = "bazel_gazelle",
+    sha256 = "de69a09dc70417580aabf20a28619bb3ef60d038470c7cf8442fafcf627c21cb",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
+    ],
+)
+
+load("//:go_repositories.bzl", "go_repositories")
+
+go_repositories()
+
 load("@rules_proto_grpc//:repositories.bzl", "bazel_gazelle", "io_bazel_rules_go")  # buildifier: disable=same-origin-load
 
 io_bazel_rules_go()
@@ -67,7 +80,7 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_depe
 go_rules_dependencies()
 
 go_register_toolchains(
-    version = "1.17.1",
+    version = "1.17.6",
 )
 
 bazel_gazelle()
@@ -87,6 +100,16 @@ rules_proto_grpc_java_repos()
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 
+http_archive(
+    name = "com_google_protobuf",
+    sha256 = "25680843adf0c3302648d35f744e38cc3b6b05a6c77a927de5aea3e1c2e36106",
+    strip_prefix = "protobuf-3.19.4",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.4.zip"],
+)
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
 
 
 load("@rules_proto_grpc//python:repositories.bzl", rules_proto_grpc_python_repos = "python_repos")
@@ -204,6 +227,13 @@ load(
     container_repositories = "repositories",
 )
 container_repositories()
+
+container_pull(
+    name = "distroless_base",
+    digest = "sha256:75f63d4edd703030d4312dc7528a349ca34d48bec7bd754652b2d47e5a0b7873",
+    registry = "gcr.io",
+    repository = "distroless/base",
+)
 
 load(
     "@io_bazel_rules_docker//go:image.bzl",

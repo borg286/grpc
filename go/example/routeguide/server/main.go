@@ -1,254 +1,109 @@
-/*
- *
- * Copyright 2015 gRPC authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-// Package main implements a simple gRPC server that demonstrates how to use gRPC-Go libraries
-// to perform unary, client streaming, server streaming and full duplex RPCs.
-//
-// It implements the route guide service whose definition can be found in routeguide/route_guide.proto.
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
-	"math"
 	"net"
-	"os"
-	"sync"
-	"time"
 
+	"github.com/salrashid123/go-grpc-bazel-docker/echo"
+
+	"github.com/google/uuid"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/testdata"
-
-	"github.com/golang/protobuf/proto"
-
-	pb "google.golang.org/grpc/example/route_guide/routeguide"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/status"
 )
 
 var (
-	tls        = flag.Bool("tls", false, "Connection uses TLS if true, else plain TCP")
-	certFile   = flag.String("cert_file", "", "The TLS cert file")
-	keyFile    = flag.String("key_file", "", "The TLS key file")
-	jsonDBFile = flag.String("json_db_file", "example/proto/routeguide_features.json", "A json file containing a list of features")
-	port       = flag.Int("port", 50051, "The server port")
+	grpcport = flag.String("grpcport", ":50051", "grpcport")
+	hs       *health.Server
 )
 
-type routeGuideServer struct {
-	pb.UnimplementedRouteGuideServer
-	savedFeatures []*pb.Feature // read-only after initialized
+// server is used to implement echo.EchoServer.
+type server struct{}
+type healthServer struct{}
 
-	mu         sync.Mutex // protects routeNotes
-	routeNotes map[string][]*pb.RouteNote
+func (s *healthServer) Check(ctx context.Context, in *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+	log.Printf("Handling grpc Check request: " + in.Service)
+	return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_SERVING}, nil
 }
 
-// GetFeature returns the feature at the given point.
-func (s *routeGuideServer) GetFeature(ctx context.Context, point *pb.Point) (*pb.Feature, error) {
-	// if point.Latitude == 0 && point.Longitude == 0 {
-	// 	return nil, grpc.Errorf(codes.InvalidArgument, "Point must not be at absolute zero coordinate")
-	// }
-
-	for _, feature := range s.savedFeatures {
-		if proto.Equal(feature.Location, point) {
-			return feature, nil
-		}
-	}
-	// No feature was found, return an unnamed feature
-	log.Printf("No feature found at point %v", point)
-	return &pb.Feature{Location: point}, nil
+func (s *healthServer) Watch(in *healthpb.HealthCheckRequest, srv healthpb.Health_WatchServer) error {
+	return status.Error(codes.Unimplemented, "Watch is not implemented")
 }
 
-// ListFeatures lists all features contained within the given bounding Rectangle.
-func (s *routeGuideServer) ListFeatures(rect *pb.Rectangle, stream pb.RouteGuide_ListFeaturesServer) error {
-	for _, feature := range s.savedFeatures {
-		if inRange(feature.Location, rect) {
-			if err := stream.Send(feature); err != nil {
-				return err
-			}
-		}
+func (s *server) SayHelloUnary(ctx context.Context, in *echo.EchoRequest) (*echo.EchoReply, error) {
+	log.Println("Got Unary Request: ")
+	uid, _ := uuid.NewUUID()
+	return &echo.EchoReply{Message: "SayHelloUnary Response " + uid.String()}, nil
+}
+
+func (s *server) SayHelloServerStream(in *echo.EchoRequest, stream echo.EchoServer_SayHelloServerStreamServer) error {
+	log.Println("Got SayHelloServerStream: Request ")
+	for i := 0; i < 5; i++ {
+		stream.Send(&echo.EchoReply{Message: "SayHelloServerStream Response"})
 	}
 	return nil
 }
 
-// RecordRoute records a route composited of a sequence of points.
-//
-// It gets a stream of points, and responds with statistics about the "trip":
-// number of points,  number of known features visited, total distance traveled, and
-// total time spent.
-func (s *routeGuideServer) RecordRoute(stream pb.RouteGuide_RecordRouteServer) error {
-	var pointCount, featureCount, distance int32
-	var lastPoint *pb.Point
-	startTime := time.Now()
+func (s server) SayHelloBiDiStream(srv echo.EchoServer_SayHelloBiDiStreamServer) error {
+	//ctx := srv.Context()
 	for {
-		point, err := stream.Recv()
-		if err == io.EOF {
-			endTime := time.Now()
-			return stream.SendAndClose(&pb.RouteSummary{
-				PointCount:   pointCount,
-				FeatureCount: featureCount,
-				Distance:     distance,
-				ElapsedTime:  int32(endTime.Sub(startTime).Seconds()),
-			})
-		}
-		if err != nil {
-			return err
-		}
-		pointCount++
-		for _, feature := range s.savedFeatures {
-			if proto.Equal(feature.Location, point) {
-				featureCount++
-			}
-		}
-		if lastPoint != nil {
-			distance += calcDistance(lastPoint, point)
-		}
-		lastPoint = point
-	}
-}
-
-// RouteChat receives a stream of message/location pairs, and responds with a stream of all
-// previous messages at each of those locations.
-func (s *routeGuideServer) RouteChat(stream pb.RouteGuide_RouteChatServer) error {
-	for {
-		in, err := stream.Recv()
+		req, err := srv.Recv()
 		if err == io.EOF {
 			return nil
 		}
 		if err != nil {
+			log.Printf("receive error %v", err)
+			continue
+		}
+		log.Printf("Got SayHelloBiDiStream %s", req.Name)
+		resp := &echo.EchoReply{Message: fmt.Sprintf("SayHelloBiDiStream Server Response for request [%s]", req.Name)}
+		if err := srv.Send(resp); err != nil {
+			log.Printf("send error %v", err)
+		}
+	}
+}
+
+func (s server) SayHelloClientStream(stream echo.EchoServer_SayHelloClientStreamServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&echo.EchoReply{Message: "SayHelloClientStream  Response"})
+		}
+		if err != nil {
 			return err
 		}
-		key := serialize(in.Location)
-
-		s.mu.Lock()
-		s.routeNotes[key] = append(s.routeNotes[key], in)
-		// Note: this copy prevents blocking other clients while serving this one.
-		// We don't need to do a deep copy, because elements in the slice are
-		// insert-only and never modified.
-		rn := make([]*pb.RouteNote, len(s.routeNotes[key]))
-		copy(rn, s.routeNotes[key])
-		s.mu.Unlock()
-
-		for _, note := range rn {
-			if err := stream.Send(note); err != nil {
-				return err
-			}
-		}
+		log.Printf("Got SayHelloClientStream Request: %s", req.Name)
 	}
-}
-
-// loadFeatures loads features from a JSON file.
-func (s *routeGuideServer) loadFeatures(filePath string) {
-	file, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		log.Fatalf("Failed to load default features: %v", err)
-	}
-	if err := json.Unmarshal(file, &s.savedFeatures); err != nil {
-		log.Fatalf("Failed to load default features: %v", err)
-	}
-	log.Printf("Loaded %d features from database file %q...", len(s.savedFeatures), filePath)
-}
-
-func toRadians(num float64) float64 {
-	return num * math.Pi / float64(180)
-}
-
-// calcDistance calculates the distance between two points using the "haversine" formula.
-// The formula is based on http://mathforum.org/library/drmath/view/51879.html.
-func calcDistance(p1 *pb.Point, p2 *pb.Point) int32 {
-	const CordFactor float64 = 1e7
-	const R float64 = float64(6371000) // earth radius in metres
-	lat1 := toRadians(float64(p1.Latitude) / CordFactor)
-	lat2 := toRadians(float64(p2.Latitude) / CordFactor)
-	lng1 := toRadians(float64(p1.Longitude) / CordFactor)
-	lng2 := toRadians(float64(p2.Longitude) / CordFactor)
-	dlat := lat2 - lat1
-	dlng := lng2 - lng1
-
-	a := math.Sin(dlat/2)*math.Sin(dlat/2) +
-		math.Cos(lat1)*math.Cos(lat2)*
-			math.Sin(dlng/2)*math.Sin(dlng/2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-
-	distance := R * c
-	return int32(distance)
-}
-
-func inRange(point *pb.Point, rect *pb.Rectangle) bool {
-	if rect.Lo == nil && rect.Hi == nil {
-		log.Printf("Invalid rect: %v", rect)
-		return false
-	}
-	left := math.Min(float64(rect.Lo.Longitude), float64(rect.Hi.Longitude))
-	right := math.Max(float64(rect.Lo.Longitude), float64(rect.Hi.Longitude))
-	top := math.Max(float64(rect.Lo.Latitude), float64(rect.Hi.Latitude))
-	bottom := math.Min(float64(rect.Lo.Latitude), float64(rect.Hi.Latitude))
-
-	if float64(point.Longitude) >= left &&
-		float64(point.Longitude) <= right &&
-		float64(point.Latitude) >= bottom &&
-		float64(point.Latitude) <= top {
-		return true
-	}
-	return false
-}
-
-func serialize(point *pb.Point) string {
-	return fmt.Sprintf("%d %d", point.Latitude, point.Longitude)
-}
-
-func newServer() *routeGuideServer {
-	s := &routeGuideServer{routeNotes: make(map[string][]*pb.RouteNote)}
-	s.loadFeatures(*jsonDBFile)
-	return s
 }
 
 func main() {
 	flag.Parse()
-	serverPort := fmt.Sprintf("%d", *port)
-	if os.Getenv("SERVER_PORT") != "" {
-		serverPort = os.Getenv("SERVER_PORT")
+	if *grpcport == "" {
+		flag.Usage()
+		log.Fatalf("missing -grpcport flag (:50051)")
 	}
-	log.Printf("Listening to port %s", serverPort)
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%s", serverPort))
+
+	lis, err := net.Listen("tcp", *grpcport)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	var opts []grpc.ServerOption
-	if *tls {
-		if *certFile == "" {
-			*certFile = testdata.Path("server1.pem")
-		}
-		if *keyFile == "" {
-			*keyFile = testdata.Path("server1.key")
-		}
-		creds, err := credentials.NewServerTLSFromFile(*certFile, *keyFile)
-		if err != nil {
-			log.Fatalf("Failed to generate credentials %v", err)
-		}
-		opts = []grpc.ServerOption{grpc.Creds(creds)}
+
+	sopts := []grpc.ServerOption{}
+
+	s := grpc.NewServer(sopts...)
+	echo.RegisterEchoServerServer(s, &server{})
+
+	healthpb.RegisterHealthServer(s, &healthServer{})
+
+	log.Printf("Starting server...")
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
 	}
-	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterRouteGuideServer(grpcServer, newServer())
-	log.Printf("Golang server listening on :%s...", serverPort)
-	grpcServer.Serve(lis)
 }

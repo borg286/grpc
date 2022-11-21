@@ -1,35 +1,45 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
-load("@rules_proto_grpc//go:defs.bzl", "go_grpc_library")
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
 
-go_grpc_library(
-    name = "routeguide",
-    importpath = "google.golang.org/grpc/example/route_guide/routeguide",
-    protos = ["//example/proto:routeguide_proto"],
+go_binary(
+    name = "server-binary",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+    goos = "linux", 
+    goarch = "amd64",    
+)
+
+
+PORT = "50001"
+
+container_image(
+    name = "server-image",
+    base = "@distroless_base//image",
+    entrypoint = ["/server-binary"],
+    files = [":server-binary"],   
+    ports=[PORT],
+    # repository = "docker.io/salrashid123"
+    # repository = "gcr.io/PROJECT_ID"      
 )
 
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "google.golang.org/grpc/example/route_guide/server",
+    importpath = "main",
     visibility = ["//visibility:private"],
     deps = [
-        ":routeguide",
-        "@com_github_golang_protobuf//proto:go_default_library",
+        "//go/example/routeguide/echo:echo_go_proto",
+        "@com_github_google_uuid//:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes:go_default_library",
-        "@org_golang_google_grpc//credentials:go_default_library",
-        "@org_golang_google_grpc//testdata:go_default_library",
+        "@org_golang_google_grpc//health:go_default_library",
+        "@org_golang_google_grpc//health/grpc_health_v1:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",    
+        "@org_golang_google_grpc//credentials:go_default_library",                
+        "@org_golang_x_net//context:go_default_library",      
     ],
 )
-
-go_image(
-    name = "server-image",
-    data = ["//example/proto:routeguide_features"],
-    embed = [":go_default_library"],
-    visibility = ["//visibility:public"],
-)
-
 go_test(
     name = "go_default_test",
     size = "small",
@@ -43,8 +53,6 @@ go_test(
 
 
 NAME = "go"
-
-PORT = "50001"
 
 # Each environment gets its own image tag. We use the LOCAL image and tell rules_k8s to swap in
 # a locally built docker image, :server-image.
@@ -133,7 +141,7 @@ load("@k8s_object//:defaults.bzl", "k8s_object")
 ) for env in ENVS]
 
 go_binary(
-    name = "server",
+    name = "server_changeme",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
 )

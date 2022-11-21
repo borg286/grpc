@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/salrashid123/go-grpc-bazel-docker/echo"
+	"github.com/borg286/go-grpc-bazel-docker/echo"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -30,7 +30,7 @@ func main() {
 	// Set up a connection to the server.
 	var err error
 	var conn *grpc.ClientConn
-	log.Printf("Dialing %v", *address)
+
 	conn, err = grpc.Dial(*address, grpc.WithInsecure())
 
 	if err != nil {
@@ -38,7 +38,6 @@ func main() {
 	}
 	defer conn.Close()
 
-	log.Printf("Creating client")
 	c := echo.NewEchoServerClient(conn)
 	ctx := context.Background()
 
@@ -47,7 +46,6 @@ func main() {
 	defer cancel()
 
 	if !*skipHealthCheck {
-		log.Printf("Doing health check")
 		resp, err := healthpb.NewHealthClient(conn).Check(ctx, &healthpb.HealthCheckRequest{Service: "echo.EchoServer"})
 		if err != nil {
 			log.Fatalf("HealthCheck failed %+v", err)
